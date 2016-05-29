@@ -1,0 +1,135 @@
+<html>
+<head>
+<style>
+
+/* Styles */
+
+body{margin:0;}
+
+.ball-container {
+  -webkit-filter: url(#both);
+          filter: url(#both);
+
+}
+#qaz {
+    position:absolute;
+  top:40px;
+  left:50px;
+    width: 100px;
+    height: 100px;
+    background: black;
+
+    
+    animation-name: spin;
+    animation-duration: 9000ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+}
+
+.cord{
+  margin-left:-10px;
+position:relative;
+  width:210px;
+  height:150px;
+float:left;
+}
+.ball {
+
+  width: 64px;
+  height: 64px;
+  background: black;
+ 
+ position:absolute;
+
+
+}
+
+.ball:nth-child(5) {
+
+  left:0px;
+  top:0px;
+}
+
+.ball:nth-child(2) {
+
+  left:0;
+  top:100px;
+}
+.ball:nth-child(3) {
+
+  left:140px;
+  top:0px;
+}
+.ball:nth-child(4) {
+
+  left:140px;
+  top:100px;
+}
+#op{
+  
+      animation-name: spin2;
+    animation-duration: 9000ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+}
+
+#nor{
+        animation-name: spin;
+    animation-duration: 9000ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+  
+}
+@keyframes spin {
+    from {
+        transform:rotate(0deg);
+    }
+    to {
+        transform:rotate(360deg);
+    }
+}
+@keyframes spin2 {
+    from {
+        transform:rotate(0deg);
+    }
+    to {
+        transform:rotate(-360deg);
+    }
+}
+</style>
+<script>
+document.onmousemove=function(q){
+ cont.style.top=q.y+'px';
+ cont.style.left=q.x+'px';
+};
+</script>
+</head>
+<body>
+<!-- The SVG is only used to define the filters -->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="position:absolute;">
+  <defs>
+
+    <filter id="both" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="11 11" result="blur" />
+        <feColorMatrix in="blur" mode="matrix" values="1 1 1 1 0  0 1 0 1 0  1 1 1 1 0  1 1 1 19 -7" result="cm" />
+      </filter>
+  </defs>
+</svg>
+
+<div class="cord">
+  <div class="ball-container">
+ <div id="qaz"></div>
+    <div class="ball" id="op"></div>
+    
+    <div class="ball" id="nor"></div>
+    <div class="ball" id="op"></div>
+    <div class="ball" id="nor"></div>
+	<div class="ball" id="cont"></div>
+  </div>
+</div>
+
+
+
+
+</body>
+</html>

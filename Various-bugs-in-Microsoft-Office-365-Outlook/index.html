@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+	<title>Various bugs in Microsoft Office 365 - Outlook - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>Various bugs in Microsoft Office 365 - Outlook</h1>
+<br>
+
+<p>
+Microsoft Outlook (web) was my very first target in my security research, something about being able to send an email with an XSS made it that much important to find the vulnerabilities. This will be the list of all the valid findings in no particular order.
+
+
+<h2>Stored XSS using SVG</h2>
+The video should explain itself, but I mainly think the problem was in the logic of sending null variables in a request. It seems redundant to mention say <code>var1=null</code> so playing around with these variable as well as the content-type variable (changing it to IMAGE/svg+xml)<br>
+I manage to find a stored XSS vulnerability.<br><br>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/swVlFwuwJAo" frameborder="0" allowfullscreen></iframe>
+<br>
+<h2>Outlook XSS using copy and paste</h2>
+Another interesting discovery was an XSS in the outlook new mail body which required the user to copy (from our evil website) into the new mail body.<br><br>
+<iframe src="https://vid.me/e/pvXl" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" height="480" width="854"></iframe>
+<br>
+<h2>Other XSS vulnerabilities in Outlook</h2>
+There was a bug that was exclusive to Google Chrome users where I inject a link tag and would result in javascript being executed as soon as the victim opened the malicious email (without any other interactions.)<br>
+The XSS vector:<br> <code>&lt;link rel='import' href='data:q,&lt;script&gt;alert(1)&lt;/script&gt;'&gt;</code><Br>
+Though I actually base64 encoded the actually content of the data uri scheme to further obfiscate the payload. It worked! No video of this though as its pretty straight forward.
+<br>
+<br>
+<h2>Base tag injection (deemed invalid at first but Microsoft changed their mind): </h2>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/bq2zi1Khl2g" frameborder="0" allowfullscreen></iframe>
+
+<h2>Reflected XSS:</h2>
+<iframe src="https://vid.me/e/kJdC" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" height="480" width="854"></iframe>
+</p><br>
+
+<p>
+<h2>References:</h2>
+<b>Acknowledgement:</b> <a href="https://technet.microsoft.com/library/security/dn903755.aspx" target="_blank">https://technet.microsoft.com/library/security/dn903755.aspx</a><br>
+<b>Honor Roll:</b> <a href="https://technet.microsoft.com/en-us/security/dn469163.aspx" target="_blank">https://technet.microsoft.com/en-us/security/dn469163.aspx</a><br>
+<br>
+
+</p>
+</div>
+
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>

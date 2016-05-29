@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Little XSS Vector Fuzzer #3 - OMICRON - Firefox only for now</title>
+<style>
+iframe{width:60px;height:70px;overflow:hidden;}
+#qin{width:240px;}
+#qtext{width:500px;height:400px;}
+#qvec,#qcharset{width:250px;}
+#qab{border:0px solid red;width:400px;}
+</style>
+</head>
+  <body>
+<div id="qab">
+
+</div>
+<br>
+<input type="button" id="qbut" value="Go">
+
+<br>
+<b>Format: </b><input type="input" id="qvec" value="<svg{q}onload={q}{b}>">
+<br>
+<b>Charset:</b><input type="input" id="qcharset" value="utf-8">
+<br>
+<b>ETA:</b><input type="input" id="qtime" size="3" value="utf-8"> seconds
+<br>
+
+
+<br>
+<b>Results:</b><br>
+<textarea id="qtext"></textarea>  
+<script type="application/javascript">
+//By @qab (hit me up if you think I should add something or any suggestions)
+var qthreads=15;//change this for what best works for your pc (number of iframes)
+var qspeed=250;//this as well. (speed of setInterval). Dont make it too fast to give the browser time to execute a potential vector.
+var qpayload=[
+atob('PCFET0NUWVBFIGh0bWw+CjxodG1sPgogIDxib2R5PgogIDxiIGlkPSJxY29kZXAiPjwvYj4KICA8aWZyYW1lIGlkPSJxIiBzY3JvbGxpbmc9Im5vIiAgc3R5bGU9IndpZHRoOjMwcHg7aGVpZ2h0OjMwcHg7IiBzYW5kYm94PSJhbGxvdy1zY3JpcHRzIGFsbG93LXNhbWUtb3JpZ2luIGFsbG93LW1vZGFscyI+PC9pZnJhbWU+CjxzY3JpcHQgdHlwZT0iYXBwbGljYXRpb24vamF2YXNjcmlwdCI+CnZhciBpPQ=='),
+atob('OzsKdmFyIGVuZD0='),
+atob('O3ZhciBxaW50Owp2YXIgcXZlYz0n'),
+atob('JzsKdmFyIHFQYXJzZT0kPT57Cgl0bXA9cXZlYy5yZXBsYWNlKCd7cX0nLFN0cmluZy5mcm9tQ29kZVBvaW50KCQpKTsKCXRtcD10bXAucmVwbGFjZSgne3F9JyxTdHJpbmcuZnJvbUNvZGVQb2ludCgkKSk7Cgl0bXA9dG1wLnJlcGxhY2UoJ3tifScsJ3RvcC5xcHV0KCcrJCsnKScpOwoJcmV0dXJuIHRtcDsKfTsKCXFpbnQ9c2V0SW50ZXJ2YWwoJD0+ewogIAkJIHFjb2RlcC5pbm5lckhUTUw9aSsrOwogIAlxLnNyYz0nZGF0YTp0ZXh0L2h0bWw7Y2hhcnNldD0='),
+atob('LCcrU3RyaW5nLmZyb21Db2RlUG9pbnQoaSkrcVBhcnNlKGkpOwogIAoJaWYoaT5lbmQpe2NsZWFySW50ZXJ2YWwocWludCk7cS5zcmM9J2RhdGE6LGRvbmUnO307CiAgfSw='),
+atob('KTsKPC9zY3JpcHQ+CjwvYm9keT4KICA8L2h0bWw+')
+];
+var qCPLimit=Math.floor(65535/qthreads);//iterations per iframe
+for(i=0;i<qthreads;i++){//Load iframes
+	var qif=document.createElement('iframe');
+	qif.id='q'+i;
+	qif.scrolling='no';
+	qif.src='data:,q'+i;
+	qab.appendChild(qif);
+
+};
+
+qtime.value=(Math.floor(((qCPLimit*qspeed)/1000)));//Estimated time to finish
+qbut.onclick=$=>{
+	qbut.disabled=true;
+	for(q=0;q<qthreads;q++){
+		window['q'+q].src='data:text/html;charset='+qcharset.value+','+qpayload[0]+(q*qCPLimit)+';'+qpayload[1]+((q*qCPLimit)+qCPLimit)+';'+qpayload[2]+qvec.value+qpayload[3]+qcharset.value+qpayload[4]+qspeed+qpayload[5];
+	};
+  var qintTimer=setInterval($=>{
+  qtime.value=qtime.value-1;
+  if(qtime.value==0){clearInterval(qintTimer);}
+  },1000);
+};
+var qParse=$=>{
+	tmp=qvec.value.replace('{q}',String.fromCodePoint($));
+	tmp=tmp.replace('{q}',String.fromCodePoint($));
+	tmp=tmp.replace('{b}','top.qput('+$+')');
+	return tmp;
+};
+var qput=$=>{
+	var hex=String.fromCodePoint($).charCodeAt(0).toString(16);
+	if(hex.length==1){hex='0'+hex}else if(hex.length>2){hex='u'+hex};
+	qtext.value+=$+':%'+hex+':'+qParse($)+'\n---------------------------\n';
+	
+	};
+</script>
+</body>
+  </html>

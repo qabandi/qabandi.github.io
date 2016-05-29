@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Little HTML event attributes fuzzer - @qab</title>
+</head>
+<body>
+<textarea id="qText" rows="30" cols="30" spellcheck="false" ></textarea>  
+<input type="button" id="qButt" value="Fuzz"/>
+
+<textarea id="qVectors" rows="30" cols="40" spellcheck="false"></textarea>  
+<br/>
+<iframe id="qFrame" width="500px" height="500px" sandbox="allow-forms allow-popups allow-scripts allow-same-origin allow-modals"></iframe>
+<script>
+qVectors.value='';
+var qEvents=[];
+
+var qTags=["a","Area","Audio","BR","Base","BaseFont","Button","Canvas","Content","dl","Data",
+"DataList","Div","Embed","FieldSet","Form","head","HR","h1","IFrame","Image","img","Input",
+"Keygen","LI","Label","Legend","Link","Map","Meta","Meter","del","ol","Object","OptGroup","Option",
+"Output","p","Param","Picture","Pre","Progress","q","Script","Select","Shadow","Source","Span","Style",
+"Caption","th","Col","td","Table","tr","tbody","TextArea","Time","Title","Track","ul","Video","picture","body","Qabandi","frameset","applet","svg"
+];
+
+var qIncludes=function(str){//Check if qEvents contains a str
+	var t;
+	var tbr=false;
+	for(t in qEvents){
+		if(qEvents[t]===str){
+			tbr=true;
+			break;
+		};
+	};
+	return tbr;
+};
+
+var getAllEvents=function(q){//populates qEvents with all event attributes of passed object
+	var thing;
+	for(thing in q){
+		if(thing.indexOf('on')===0){
+			if(!qIncludes(thing)){
+				qEvents.push(thing);
+			};
+		};
+	};
+};
+
+getAllEvents(window);//get all event attributes in the window object
+getAllEvents(document);//get all event attributes in the document object
+
+//get all event attributes in most html elements.
+var i;
+for(i in qTags){
+	var qElem=document.createElement(qTags[i]);
+	getAllEvents(qElem);
+};
+
+//Display found event attributes
+var qResult='Total: '+qEvents.length+'\n--------\n'+qEvents.join('\n');
+
+qText.value=qResult;
+
+
+//tests
+var getAttributes=function(elm){//give element name, get set of attributes in html friendly form
+	var qElem=document.createElement(elm);
+	
+	var qAttr;
+	var tbr=' ';	
+		for(qAttr in qElem){
+			try{
+			if(qElem[qAttr]===''){
+				tbr+=qAttr+'="qab:andi" ';
+			};
+			}catch(e){};
+		};
+		return tbr;
+};
+
+
+var qEventAttributes=function(elem){
+	var red=' ';
+	var r;
+	for(r in qEvents){
+		red+=qEvents[r]+'="top.qPut(/'+qEvents[r]+':'+elem+'/.source)" ';
+		};
+		
+		return red;
+};
+
+var qPut=function(q){//called from inside iframe to fill results.
+	
+	qVectors.value+=q+'\n';
+};
+qButt.onclick=function(){
+	var thing;
+	var qi=0;
+	
+	var qInt=setInterval(function(){console.log(qTags[qi]);
+		var qElemName=qTags[qi];
+		var qPayload='<'+qElemName+' '+qEventAttributes(qElemName)+' '+getAttributes(qElemName)+'></'+qElemName+'>';
+			if(navigator.userAgent.indexOf("Chrome") != -1 ){//Chrome
+				qFrame.srcdoc=qPayload;
+			}else if(navigator.userAgent.indexOf("Firefox")!= -1){//Firefox
+				qFrame.src='data:text/html,'+qPayload;
+			}
+			qi++;
+		 if(qi==qTags.length){clearInterval(qInt);qFrame.src='about:blank'};
+		 
+	},250);
+
+};
+</script>
+
+</body>
+</html>

