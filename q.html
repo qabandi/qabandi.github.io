@@ -1,0 +1,9 @@
+
+<img src="http://i.imgur.com/0PhK7.png" id="qimg"/>
+<script>
+
+alert(1)
+qimg.ondragstart=function(ev){
+	ev.dataTransfer.setData('application/x-moz-file-promise-url','http://localhost:777/');
+}
+</script>
