@@ -39,7 +39,7 @@ The first bug I reported that involved the folder picker was that of bad symanti
 <b>Bug 1319370 (CVE-2017-5414) webkitdirectory - OS username disclosure (SEC-MEDIUM)</b><br><br>
 I consider the second bug a key factor in achieving a full local files disclosure. The issue here was that when a file picker was opened once, then the second time its opened it would have descended one folder.<br>
 So I made a PoC where it showed if we tricked a victim into holding the 'Enter' key, then we could also pop a filepicker whilst this was happening and it would result in the user 'picking' a folder that they were unaware of.<br>
-In order to grab the OS username the victim would need to hold down the enter button for two filepicker dialogs, since (on Windows) the default directory is 'C:\Users\{username}'.
+In order to grab the OS username the victim would need to hold down the enter button for two filepicker dialogs, since (on Windows) the default directory is 'C:\Users\{username}\Desktp\'.
 <br>
 That is the main user interaction we rely on when trying to exploit this bug, inspired by <a href="https://www.mozilla.org/en-US/security/advisories/mfsa2011-40/" target="_blank">this older Mozilla bug</a>. Another way is to trick a user into repeatedly pressing a certain location and popping the folderpicker there so that the 'confirm pick' button will be pressed automatically.
 <br><br>
