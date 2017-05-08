@@ -1,0 +1,113 @@
+<head><title>Drag n Drop editor - by @qab</title></head>
+<body>
+<style>
+#qimg{width:100px;height:100px;border:1px solid red;}
+#qform{width:600px;}
+#qfile{font-size:60px;border:1.5px solid black;width:50px;height:50px;line-height:53px;}
+#qnew{font-size:55px;border:1.5px solid black;width:50px;height:50px;line-height:45px;cursor: default;}
+textarea{margin: 0px; width: 232px; height: 85px;}
+</style>
+<div draggable="true" ondragover="event.preventDefault()" id="qfile">&#9678;</div>
+
+<form id="qform">
+<fieldset id="qfs">
+<legend>Data types & values</legend>
+<br>
+<p>Drag and drop something in the bullseye above first.<br> Then you may edit values and create your own dragged object by dragging the Q below.
+<br><br>
+For example, drag any of the following elements and drop it into the bullseye:<br><br>
+<img src='https://www.facebook.com/favicon.ico'/><br>
+<a href=''>Anchor tag</a>
+<br>
+<b>Some text</b>
+<br><br>
+
+You may also drop files from your desktop (or other applications), keep in mind you can't create your own edited 'file' object.
+</p>
+</fieldset>
+</form>
+<div id="qnew" draggable="true">
+  Q
+</div>
+<br>
+
+<script>
+
+
+qnew.ondragstart=function(e){
+e.dataTransfer.clearData();
+	for(f=1;f<=window.i;f++){
+	console.log(f);
+		try{
+		e.dataTransfer.setData(window['qq'+f].value,window['q'+f].value);
+		}catch(e){
+		console.dir(e)
+		}
+	}
+}
+
+var dropbox;
+var i=0;
+function drop(e) {
+ window.q(e);
+i=0;
+  console.dir(e.dataTransfer);
+	qfs.innerHTML='<legend>Data types & values</legend>';
+  	for(z in e.dataTransfer.types){
+		if(z.length<=2){
+			if(e.dataTransfer.types[z]!='Files'){
+			try{
+			i++;
+
+			var elem=document.createElement('input');
+			elem.type='input';
+			elem.value=e.dataTransfer.types[z];
+			elem.id='qq'+i;
+			var elem2=document.createElement('textarea');
+			elem2.id='q'+i;
+			elem2.value=e.dataTransfer.getData(e.dataTransfer.types[z]);
+			
+			var x=document.createElement('input');
+			x.type='button';
+			x.value='X';
+			x.qdata=i+'';
+			x.onclick=function(e){window['q'+e.target.qdata].remove();window['qq'+e.target.qdata].remove();e.target.remove();};
+			qfs.appendChild(elem);
+			qfs.appendChild(elem2);
+			qfs.appendChild(x);
+			qfs.appendChild(document.createElement('br'));
+			
+			}catch(ee){console.dir(ee)}
+			}else{
+			  console.dir(red=e.dataTransfer.files[0]);
+if(e.dataTransfer.files.length>0){
+  read = new FileReader();
+
+read.readAsBinaryString(red);
+qfs.innerHTML='<b>'+red.name+'</b> size:'+red.size+'<br>';
+read.onloadend = function(){
+	
+	var afile=document.createElement('textarea');
+	afile.value=read.result;
+	qfs.appendChild(afile);
+}
+}
+			}
+		}
+	}
+	
+
+}
+function q(e) {
+  e.stopPropagation();
+  e.preventDefault();
+}
+dropbox = document.getElementById("qfile");
+dropbox.addEventListener("dragenter", q, false);
+dropbox.addEventListener("dragover", q, false);
+dropbox.addEventListener("drop", drop, false);
+
+
+
+</script>
+</body>
