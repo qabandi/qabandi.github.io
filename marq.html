@@ -1,0 +1,57 @@
+<b>q</b>
+<style>
+marquee{border:10px dotted black;
+	
+}
+</style>
+<div id="q"></div>
+<script>
+function getRandomIntInclusive(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function getRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++ ) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+function Marq(elm,i){
+	var marq=document.createElement('marquee');
+	marq.direction=(getRandomIntInclusive(1,5)>3)?'down':'up';
+	marq.innerHTML='Q';//(i%2==0)?'down':
+
+	marq.width=getRandomIntInclusive(25+(i*2),800-(i*20));
+	marq.height=getRandomIntInclusive(25+(i*2),800-(i*20));
+	marq.id='q'+i;
+	
+	marq.scrolldelay=getRandomIntInclusive(1,111);
+	marq.scrollamount=getRandomIntInclusive(1,500);
+	marq.truespeed='';
+	marq.behavior='alternate';
+	marq.style='border-radius: 500px;opacity:0.9;border:10px dotted '+getRandomColor()+';background-color:'+getRandomColor();
+	if(i==0){marq.style+=';width:1000px;height:800px;border-radius: 500px;';}
+	elm.appendChild(marq);
+	if(i<15){
+		Marq(marq,++i);
+		if(i<3){
+		Marq(marq,i);
+		Marq(marq,i);
+		}
+			if(getRandomIntInclusive(1,15)==2){Marq(marq,i);}
+	}
+	
+	
+}
+document.body.style='background-color:'+getRandomColor();
+var i=0;
+Marq(q,i);
+
+setInterval(function(){
+//window['q'+getRandomIntInclusive(0,25)][0].remove();
+},100);
+//setTimeout('location.reload()',1250)
+</script>
