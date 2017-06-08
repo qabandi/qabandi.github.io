@@ -1,0 +1,1 @@
+onerror=function(q){console.log("err"+q);};onmessage=function(q){console.log("Will eval:"+q.data);eval(q.data)};
