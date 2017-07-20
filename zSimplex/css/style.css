@@ -28,7 +28,8 @@ body {
 	font: 13px/19px  Arial, Helvetica, sans-serif;
 	color:#ecedef;
 	position:relative;
-	background: #bccfe2;
+	background:#ffffff;
+	z-index:0;
 }
 
 .ic {
@@ -94,10 +95,10 @@ a {
 	-webkit-transition: 0.5s ease;
 }
 
-a:hover {
+/**a:hover {
 	color: #334960;
 	
-}
+}**/
 
 /*preclass*/
 
@@ -166,10 +167,10 @@ header {
 	z-index: 999;
 	left: 0;
 	right: 0;
-	padding-bottom: 20px;
+
 	top: 0;
-	overflow: hidden;
-	background-color: #bccfe2;
+	/**overflow: hidden;**/
+	background-color: rgba(255, 255, 255, 0.8);
 	transition: 0.2s ease;
 	-o-transition: 0.1s ease;
 	-webkit-transition: 0.2s ease;
@@ -205,10 +206,13 @@ header h1 a img {
 	padding-top: 125px;
 	text-align: center;
 	position: relative;
+	 text-shadow: 1px 1px 2px black, 0 0 1em black;
+  color: white;
+  border-top:5px solid #004494;
 }
 
-.content:after {
-	display: block;
+.content:after {/**for the little arrow thing on top of each page **/
+	display: none;
 	position: absolute;
 	content: '';
 	z-index: 1;
@@ -247,10 +251,12 @@ border-color: #334960 transparent transparent transparent;
 }
 
 #page1 {
-	padding-bottom: 191px;
+	top:-5px;
 	background-image:url('http://alhadi-industries.com/wp-content/uploads/2016/11/slide1.jpg');
 	background-repeat:no-repeat;
 	background-size:cover;
+	background-position: 0 125px;
+	z-index:-10;
 }
 
 header.page1 .men .hover{
@@ -275,7 +281,7 @@ header.page5 .men4 .hover{
 
 #page2 {
 	background-color: #516b87;
-	padding-top: 230px;
+	padding-top: 130px;
 	padding-bottom: 500px;
 	padding-bottom: 190px;
 	background-image:url('http://alhadi-industries.com/wp-content/uploads/2016/11/slide2.jpg');
@@ -284,12 +290,12 @@ header.page5 .men4 .hover{
 }
 
 header.page2 {
-	background-color: #a8c1db;
+	background-color: rgba(255, 255, 255, 0.8);
 
 }
 
 header.page2 .hover {
-	background-color: #1858a3;
+	background-color: #004494;
 }
 
 
@@ -303,11 +309,11 @@ header.page2 .hover {
 }
 
 header.page3{
-	background-color: #93b4d6;
+	background-color: rgba(255, 255, 255, 0.8);
 }
 
 header.page3 .hover {
-	background-color: #296dbc;
+	background-color: #004494;
 }
 
 #page4 {
@@ -318,23 +324,23 @@ header.page3 .hover {
 }
 
 header.page4{
-	background-color: #85aad1;
+	background-color: rgba(255, 255, 255,0.8);
 }
 
 header.page4 .hover {
-	background-color: #3779c6;
+	background-color: #004494;
 }
 
 #page5 {
-	background-color: #a3c1e0;
+	background-color: #232323;
 }
 
 header.page5{
-	background-color: #a3c1e0;
+	background-color: rgba(8, 31, 68, 0.8);
 }
 
 header.page5 .hover {
-	background-color: #5796e0;
+	background-color: #081f44;
 }
 
 .content {
@@ -395,30 +401,33 @@ header.page5 .hover {
 .text1 {
 	font-size: 19px;
 	line-height: 19px;
+	background-color:rgba(24, 88, 163, 0.9);
+	padding:12px;
 }
 
 .box {
-	background-color: rgba(24, 88, 163, 0.8);
-	border: 1px solid #2f4359;
-	padding: 23px 0 24px;
+	/**background-color: rgba(24, 88, 163, 0.8);
+	
+	padding: 23px 0 24px;**/
 	border-top-width: 4px;
 	border-bottom-width: 4px;
 	
 }
 
 .box img {
-	border: 1px solid #2f4359;
+	/**border: 1px solid #2f4359;
 	border-radius: 500px;
 	margin-bottom: 19px;
-	width:200px;
+	width:200px;**/
 }
+
 
 .box .text1 {
 	margin-bottom: 1px;
 }
 
 .slogan {
-	margin-bottom: 117px;
+	/**margin-bottom: 117px;**/
 }
 
 
@@ -481,7 +490,7 @@ header.page5 .hover {
 }
 
 #page4 {
-	padding-top: 231px;
+	padding-top: 131px;
 	padding-bottom: 186px;
 }
 
@@ -499,18 +508,18 @@ header.page5 .hover {
 
 .companies a {
 	display: inline-block;
-	color: #b288ab;
+	color: white;
 	padding-right: 12px;
-	background: url(../images/link_marker.png) right 4px no-repeat;
+	background: url(../images/qlink_marker.png) right 4px no-repeat;
 	margin-top: 14px;
 }
 
 .companies a:hover {
-	color: #fff;
+	color: #000;
 }
 
 .companies .clear {
-	height: 114px;
+	height: 14px;
 }
 
 #page5 {
@@ -552,7 +561,7 @@ header.page5 .hover {
 }
 
 .map a {
-	color: #373b47;
+	color: #fff;
 }
 
 .map a:hover {
@@ -586,10 +595,9 @@ address dd span {
 
 footer {
 	display: block;
+	background-color:#232323;
 }
 
-footer {
-}
 
 footer a:hover {
 	color: #516b87;

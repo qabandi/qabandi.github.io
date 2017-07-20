@@ -250,6 +250,8 @@
 
 
 .caption {
+	 text-shadow: 1px 1px 2px black, 0 0 1em black;
+  color: white;
 	left: 0px;
 	right: 0px;
 	top: 0;

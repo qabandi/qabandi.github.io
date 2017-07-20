@@ -4,13 +4,15 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 		<title>Home</title>
-		<link rel="icon" href="images/favicon.ico">
-		<link rel="shortcut icon" href="images/favicon.ico" />
+		<link rel="icon" href="http://alhadi-industries.com/wp-content/uploads/2016/11/fav.png">
+		<link rel="shortcut icon" href="http://alhadi-industries.com/wp-content/uploads/2016/11/fav.png" />
 		<link rel="stylesheet" href="css/style.css">
 		<link rel="stylesheet" href="css/zerogrid.css" >
 		<link rel="stylesheet" href="css/camera.css">
 		<link rel="stylesheet" href="css/form.css">
 		<link rel="stylesheet" href="css/responsive.css">
+		<link rel="stylesheet" href="css/smoothslides.theme.css">
+		<link rel="stylesheet" href="css/qnav.css">
 		<script src="js/jquery.js"></script>
 		<script src="js/jquery-migrate-1.1.1.js"></script>
 		<script src="js/superfish.js"></script>
@@ -21,6 +23,7 @@
 		<script src="js/jquery.ui.totop.js"></script>
 		<script src="js/tms-0.4.1.js"></script>
 		<script src="js/css3-mediaqueries.js"></script>
+		<script type="text/javascript" src="js/smoothslides-2.2.1.min.js"></script>
 		<script>
 			$(document).ready(function(){
 				$('.slider_wrapper')._TMS({
@@ -66,6 +69,16 @@
 				$(document).ready(function(){
 					$().UItoTop({ easingType: 'easeOutQuart' });
 				});
+				//hotfix for the menu styling
+				setInterval(function(){
+				if($(window).scrollTop()<300){
+					$('.current.men a').css('color','white');
+				}else{
+				    $('.current.men a').css('color','#004494');
+				}
+				},222);
+				
+				
 		</script>
 		<!--[if lt IE 8]>
 			<div style=' clear: both; text-align:center; position: relative;'>
@@ -78,8 +91,87 @@
 			<script src="js/html5shiv.js"></script>
 			<link rel="stylesheet" media="screen" href="css/ie.css">
 		<![endif]-->
+		
+		<style>
+	#myslideshow11{
+	position:absolute;
+	top:0px;
+		
+		width:100%;
+		height:100%;
+		z-index:-1;
+	}
+
+	.qbox{
+		background-color:rgba(24, 88, 163, 0.9);
+		padding:10px;
+		text-align: left;
+		 white-space: pre-wrap;
+	}
+	
+	.qboxhead{
+		text=align:center;
+	}
+	
+	.qreadmore{
+		font-size:32px;
+		padding-top:10px;
+	}
+	
+	#page4 img{
+		width:200px;
+		background-color:rgba(255, 255, 255, 0.7);
+		
+	}
+	
+
+	
+	.qfoot{
+		padding:5px;
+	}
+	
+	.qnavsub1, .qnavsub2, .qnavsub4{
+		width:200px;
+		background-color:#004494;
+		    position: absolute;
+		  visibility: hidden;
+		opacity: 0;
+		min-height:50px;
+		z-index: -1;
+		font-size: 18px;
+    font-family: 'Signika', sans-serif;
+
+    line-height: 24px;
+  transform: translateY(-2em);
+
+  transition: all 0.3s ease-in-out 0s, visibility 0s linear 0.3s, z-index 0s linear 0.01s;
+
+	}
+	
+	.qnavsub1 a, .qnavsub2 a, .qnavsub4 a{
+		border-bottom:1px solid white;
+		display:block;
+		transition: background-color 1s;
+	}
+	
+	.men1:hover .qnavsub1, .men2:hover .qnavsub2, .men4:hover .qnavsub4{
+		
+		  visibility: visible;
+
+			opacity: 1;
+			z-index:1;
+		  transform: translateY(0%);
+		transition-delay: 0s, 0s, 0.3s;
+  
+	}
+	
+	.qnavsub1 a:hover,.qnavsub2 a:hover,.qnavsub4 a:hover{
+		 background-color: rgba(0,0,0,.5);
+	}
+		</style>
 	</head>
 	<body class="">
+
 <!--==============================header=================================-->
 		<header class="page1">
 			<div class="zerogrid">
@@ -89,10 +181,29 @@
 							<nav class="">
 								<ul class="sf-menu">
 									<li class="current men"><a onClick="goToByScroll('page1'); return false;" href="#">Home </a> <strong class="hover"></strong></li>
-									<li class="men1"><a onClick="goToByScroll('page2'); return false;" href="#">About</a><strong class="hover"></strong></li>
-									<li class=" men2"><a onClick="goToByScroll('page3'); return false;" href="#">Services</a> <strong class="hover"></strong></li>
-									<li class=" men3"><a onClick="goToByScroll('page4'); return false;" href="#">Clients</a> <strong class="hover"></strong></li>
-									<li class=" men4"><a onClick="goToByScroll('page5'); return false;" href="#">Contacts</a> <strong class="hover"></strong></li>
+									<li class="men1"><a onClick="goToByScroll('page2'); return false;" href="#">Services</a><strong class="hover"></strong>
+										<div class="qnavsub1">
+											<a href="/zSimplex/products.html">Products & Services</a>
+											<a href="/zSimplex/machines.html">Production Line Machines</a>
+											<a href="/zSimplex/qa.html">Quality Assurance</a>
+										</div>
+									
+									</li>
+									<li class=" men2"><a onClick="goToByScroll('page3'); return false;" href="#">About</a> <strong class="hover"></strong>
+										<div class="qnavsub2">
+											<a href="/zSimplex/aboutus.html">History</a>
+											<a href="#">Thing 2</a>
+
+										</div>
+									</li>
+									<li class=" men3"><a onClick="goToByScroll('page4'); return false;" href="#">Accreditation</a> <strong class="hover"></strong></li>
+									<li class=" men4"><a onClick="goToByScroll('page5'); return false;" href="#">Contacts</a> <strong class="hover"></strong>
+										<div class="qnavsub4">
+											<a href="#">Thing 1</a>
+										
+
+										</div>
+									</li>
 								</ul>
 							</nav>
 							<div class="clear"></div>
@@ -105,6 +216,11 @@
 		</header>
 <!--=======content================================-->
 		<div id="page1" class="content">
+<div class="smoothslides" id="myslideshow1">
+	<img src='http://alhadi-industries.com/wp-content/uploads/2016/11/slide1.jpg'/>
+	<img src='http://alhadi-industries.com/wp-content/uploads/2016/11/slide2.jpg'/>
+	<img src='http://alhadi-industries.com/wp-content/uploads/2016/11/slide3.jpg'/>
+</div>
 			<div class="zerogrid">
 				<div class="col-full">
 					<div class="wrap-col">
@@ -142,9 +258,45 @@
 							<a href="#"></a>
 							<a href="#"></a>
 						</div>
+						<br/>
+						<br/>
+						<br/>
+						<br/>
+						<br/>
+						<br/>
+						<br/>
+						<br/>
+						<br/>
+						<br/>
+						<br/>			<br/>
+						<br/>
+						<br/>
+						<br/>
+						<br/>
+					
+				
 					</div>
+
 				</div>
+						
+
 			</div>
+			
+
+
+
+
+<script type="text/javascript">
+	$(window).load( function() {
+		$('#myslideshow1').smoothSlides({
+			navigation: false,
+			matchImageSize: false,
+			effectDuration:8000,
+			pagination: false
+		});
+	});
+</script>
+
 		</div>
 		<div id="page2" class="content">
 			<div class="zerogrid">
@@ -163,7 +315,7 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 					<div class="wrap-col">
 						<div class="box maxheight">
 							<img src="http://alhadi-industries.com/wp-content/uploads/2016/09/1-1.jpg" alt="">
-							<div class="text1">Flat tampered glass</div>senior manager
+							<div class="text1">Flat tampered glass</div>
 
 						</div>
 					</div>
@@ -173,7 +325,7 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 					<div class="wrap-col">
 						<div class="box maxheight">
 							<img src="http://alhadi-industries.com/wp-content/uploads/2016/09/2-1.jpg" alt="">
-							<div class="text1"><a href="#">Curved Glass</a></div>senior manager
+							<div class="text1"><a href="#">Curved Glass</a></div>
 
 						</div>
 					</div>
@@ -183,7 +335,7 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 					<div class="wrap-col">
 						<div class="box maxheight">
 							<img src="http://alhadi-industries.com/wp-content/uploads/2016/09/3-1.jpg" alt="">
-							<div class="text1"><a href="#">Laminated Glass</a></div>senior manager
+							<div class="text1"><a href="#">Laminated Glass</a></div>
 
 						</div>
 					</div>
@@ -193,47 +345,57 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 					<div class="wrap-col">
 						<div class="box maxheight">
 							<img src="http://alhadi-industries.com/wp-content/uploads/2016/09/4.jpg" alt="">
-							<div class="text1"><a href="#">Bullet Resistant Glass</a></div>senior manager
+							<div class="text1"><a href="#">Bullet Resistant Glass</a></div>
 
 						</div>
 					</div>
 				</div>
 				
-												<div class="col-1-4">
+							<div class="col-1-4">
 					<div class="wrap-col">
 						<div class="box maxheight">
 							<img src="http://alhadi-industries.com/wp-content/uploads/2016/09/5-1.jpg" alt="">
-							<div class="text1"><a href="#">Structural Glazing</a></div>senior manager
+							<div class="text1"><a href="#">Structural Glazing</a></div>
 
 						</div>
 					</div>
 				</div>
 				
-												<div class="col-1-4">
+						<div class="col-1-4">
 					<div class="wrap-col">
 						<div class="box maxheight">
 							<img src="http://alhadi-industries.com/wp-content/uploads/2016/09/6-1.jpg" alt="">
-							<div class="text1"><a href="#">Insulating Glass</a></div>senior manager
+							<div class="text1"><a href="#">Insulating Glass</a></div>
 
 						</div>
 					</div>
 				</div>
 				
-												<div class="col-1-4">
+						<div class="col-1-4">
 					<div class="wrap-col">
 						<div class="box maxheight">
 							<img src="http://alhadi-industries.com/wp-content/uploads/2016/09/7-1.jpg" alt="">
-							<div class="text1"><a href="#">Decorative Glass</a></div>senior manager
+							<div class="text1"><a href="#">Decorative Glass</a></div>
 
 						</div>
 					</div>
 				</div>
 				
-												<div class="col-1-4">
+					<div class="col-1-4">
 					<div class="wrap-col">
 						<div class="box maxheight">
 							<img src="http://alhadi-industries.com/wp-content/uploads/2016/09/8.jpg" alt="">
-							<div class="text1"><a href="#">Automotive Glass</a></div>senior manager
+							<div class="text1"><a href="#">Automotive Glass</a></div>
+
+						</div>
+					</div>
+				</div>
+				
+				<div class="col-1-4">
+					<div class="wrap-col">
+						<div class="box maxheight">
+							<img src="http://www.ceramicindustry.com/ext/resources/Issues/2014_Oct/CI1014-glasstec-slide1-615px.jpg" alt="">
+							<div class="text1"><a href="#">More</a></div>
 
 						</div>
 					</div>
@@ -245,13 +407,30 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 				<div class="col-full">
 					<div class="wrap-col">
 						<div class="slogan">
-							<h3>Our Services</h3>
-							<div class="text1">
-								Vivamus at magna non nunc tristique rhoncus. Aliquam nibh ante, egestas id dictum a, commodo luctus libero. Praesent faucibus malesuada faucibus. Donec laoreet metus id laoreet malesuada. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam consectetur orci sed nulla facilisis consequat. Curabitur vel lorem sit amet nulla ullamcorper fermentum.  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+							<h3>ABOUT US</h3>
+							<div class="text1 qbox"><b class="qboxhead">		Al-Hadi industries was first established 1973 by the late Mohammed Hadi Al-Awadi.</b>
+							
+							
+	The operations are now located in the subhan industrial area in Kuwait and in response to the increased demand for processed glasses, such as tempered, insulated double glazing units and laminated glass, Al-Hadi Glass Industries has established a new factory.
+
+The facility encompasses an impressive 10,000m2 in area and equipped with the very latest technological glass processing machines from the world’s leading manufacturers, such as Glaston of Finland and Lisec of Austria to provide the best possible quality glass products anywhere in the world.
+
+As an added service Al-Hadi has also formed joint venture with leading companies to assist in the field of installation of monumental curtain willing for high rise buildings.
+
+Al-Hadi are deeply committed to meeting the needs of our customers and we will constantly focus on customer satisfaction and concentrate on reliable performance for world
+best quality standards for every process.
+
+Glass today is used to perform many functions other than its primary role of allowing light to enter a building. Its applications can be visual, mechanical, structural, decorative, thermal, architectural or artistic and even a combination of any or all of these aspects. Al-Hadi Glass will provide a range of services, including design assistance, specification guidelines, product development, testing and assessment to cover all these elements and thus achieve excellence and unique standards in the field of glass processing.
+						
 							</div>
+<div class="qreadmore">
+	<a href="/zSimplex/aboutus.html">Read more</a>
+</div>	
 						</div>
 					</div>
 				</div>
+				
+				<!--
 				<div class="col-1-4">
 					<div class="wrap-col">
 						<div class="box maxheight1">
@@ -283,80 +462,80 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 							<div class="text1"><a href="#">Consulting</a></div>Etiam dui eros na non nunc tristique rhoncus. Aliquam nibh ante, egestas id dictum a commodo luctus libero.
 						</div>
 					</div>
-				</div>
+				</div>-->
 			</div>
 		</div>
 		<div id="page4" class="content">
 			<div class="zerogrid">
 				<div class="col-full">
 					<div class="wrap-col">
-						<h3>Our Clients</h3>
+						<h3>Accreditation & Partnerships</h3>
 					</div>
 				</div>
 				<div class="companies">
 					<div class="col-1-4">
 						<div class="wrap-col">
-							<img src="images/logo1.jpg" alt="">
-							<div class="text1">Company Name</div>Aliquam nibh ante, egestas id dictum  wrecommodo luctus liberoaesent.
+							<img src="images/q1.png" alt="">
+							<div class="text1">ISO 9001:2015</div>Quality management systems
 							<br>
-							<a href="#">Go to Site</a>
+							<a href="https://www.iso.org/standard/62085.html">Go to Site</a>
 						</div>
 					</div>
 					<div class="col-1-4">
 						<div class="wrap-col">
-							<img src="images/logo2.jpg" alt="">
-							<div class="text1">Company Name</div>Fusce adipiscing quam id risus gittis, non consequat lacus interdumoin.
+							<img src="images/q2.png" alt="">
+							<div class="text1">ISO 14001:2015</div>Environmental management
 							<br>
-							<a href="#">Go to Site</a>
+							<a href="https://www.iso.org/iso-14001-environmental-management.html">Go to Site</a>
 						</div>
 					</div>
 					<div class="col-1-4">
 						<div class="wrap-col">
-							<img src="images/logo3.jpg" alt="">
-							<div class="text1">Company Name</div>Quisque viverra nulla nunc, eu ultrices wertlibero ultricies egetasellus um.
+							<img src="images/q3.png" alt="">
+							<div class="text1">OHSAS 19001</div>Occupational Health and Safety Assessment Series
 							<br>
-							<a href="#">Go to Site</a>
+							<a href="https://en.wikipedia.org/wiki/OHSAS_18001">Go to Site</a>
 						</div>
 					</div>
 					<div class="col-1-4">
 						<div class="wrap-col">
-							<img src="images/logo4.jpg" alt="">
-							<div class="text1">Company Name</div>Courrewerwe abitur vel lorem sit amet ulla ullamcorper fermentumn vitae.
+							<img src="images/q4.png" alt="">
+							<div class="text1">Guardian Glass</div>Produces high performance glass around the world for architectural, residential, interior, transportation and technical glass applications.
 							<br>
-							<a href="#">Go to Site</a>
+							<a href="https://www.guardianglass.com">Go to Site</a>
 						</div>
 					</div>
 					<div class="clear"></div>
 					<div class="col-1-4">
 						<div class="wrap-col">
-							<img src="images/logo5.jpg" alt="">
-							<div class="text1">Company Name</div>Oiliquam nibh ante, egestas id dictum  wrecommodo luctus liberoaesente.
+							<img src="images/cert5.png" alt="">
+							<div class="text1">Pilkington</div>Making glass for the world's buildings and vehicles.
 							<br>
-							<a href="#">Go to Site</a>
+							<a href="https://www.pilkington.com/">Go to Site</a>
 						</div>
 					</div>
 					<div class="col-1-4">
 						<div class="wrap-col">
-							<img src="images/logo6.jpg" alt="">
-							<div class="text1">Company Name</div>Gusce adipiscing quam id risus gittis, non consequat lacus interdumoiju.
+							<img src="images/q6.png" alt="">
+							<div class="text1">Saint-Gobain</div>The world leader in the habitat and construction markets, designs, manufactures and distributes building and high-performance materials.
 							<br>
-							<a href="#">Go to Site</a>
+							<a href="https://www.saint-gobain.com/en">Go to Site</a>
 						</div>
 					</div>
 					<div class="col-1-4">
 						<div class="wrap-col">
-							<img src="images/logo7.jpg" alt="">
-							<div class="text1">Company Name</div>Niuisque viverra nulla nunc, eu ultrices wertlibero ultricies egetasellus ol.
+							<img src="images/q7.png" alt="">
+							<div class="text1">AGC Glass Europe</div>Produces, processes and distributes flat glass for the building industry, the automotive industry and other sectors (transport, solar power and high-tech).
 							<br>
-							<a href="#">Go to Site</a>
+							<a href="http://www.agc-glass.eu/en">Go to Site</a>
 						</div>
 					</div>
 					<div class="col-1-4">
 						<div class="wrap-col">
-							<img src="images/logo8.jpg" alt="">
-							<div class="text1">Company Name</div>Fouerourrewerwe abitur vel lorem sit amet ulla ullamcorper fermentum.
+							<img src="images/q8.png" alt="">
+							<div class="text1">Tremco Illbruck</div>Manufacturer and service provider of high-performance sealing and bonding solutions for the construction and manufacturing industry.
 							<br>
-							<a href="#">Go to Site</a>
+							<a href="http://www.tremco-illbruck.com/en_INT/home/">Go to Site</a>
 						</div>
 					</div>
 				</div>
@@ -368,9 +547,8 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 					<div class="wrap-col">
 						<div class="slogan">
 							<h3>Get in Touch</h3>
-							<div class="text1">
-								Gyrto ivamus at magna non nunc tristique rhoncusu. Lliquam nibh ante, egestas id dictum a, commodo luctus mibero. Praesent faucibus malesuada faucibu. Monec laoreet metus id laoreet malesuadw.
-							</div>
+							<!--<div class="text1">
+							</div>-->
 						</div>
 					</div>
 				</div>
@@ -381,14 +559,14 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 							<div class="text1">Address</div>
 							<address>
 								<dl>
-									<dt>The Company Name Inc.<br>
-									8901 Marmora Road,<br>
-									Glasgow, D04 89GR.
+									<dt>Al-Hadi Industries<br>
+									Subhan Industrial Area,<br>
+									Block 8, Street 105, Plot 166
 									</dt>
-									<dd><span>Freephone:</span>+1 800 559 6580</dd>
-									<dd><span>Telephone:</span>+1 800 603 6035</dd>
-									<dd><span>FAX:</span>+1 800 889 9898</dd>
-									<dd>E-mail: <a href="#" class="link-1">mail@demolink.org</a></dd>
+									
+									<dd><span>Telephone:</span>+965 2471 3061 </dd>
+									<dd><span>FAX:</span>+965 2471 3056</dd>
+									<dd>E-mail: <a href="#" class="link-1">info@alhadi-industries.com</a></dd>
 									<dd>Skype: <a href="#" class="link-1">@skypename</a></dd>
 								</dl>
 							</address>
@@ -396,9 +574,9 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 					</div>
 					<div class="col-1-4">
 						<div class="wrap-col">
-							<div class="text1">&nbsp;</div>
+							<div class="text1">Map</div>
 							<figure class="">
-								<iframe src="http://maps.google.com/maps?f=q&amp;source=s_q&amp;hl=en&amp;geocode=&amp;q=Brooklyn,+New+York,+NY,+United+States&amp;aq=0&amp;sll=37.0625,-95.677068&amp;sspn=61.282355,146.513672&amp;ie=UTF8&amp;hq=&amp;hnear=Brooklyn,+Kings,+New+York&amp;ll=40.649974,-73.950005&amp;spn=0.01628,0.025663&amp;z=14&amp;iwloc=A&amp;output=embed"></iframe>
+								<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13926.96794679367!2d47.99585188873102!3d29.231142840215565!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3fcf9f35b38a0631%3A0x826fff7ee177f1a2!2sSabhan+Industrial+Area!5e0!3m2!1sen!2skw!4v1478175444082"></iframe>
 							</figure>
 						</div>
 					</div>
@@ -432,18 +610,41 @@ AL Hadi Glass Industries, are specializes in providing our customers with a comp
 				</div>
 			</div>
 		</div>
+
 <!--==============================footer=================================-->
 		<footer>
-			<div class="zerogrid">
+			<div class="zerogrid qfoot">
 				<div class="col-full">
 					<div class="wrap-col">
 						<div class="copy">
-							<a onClick="goToByScroll('page1'); return false;" href="#"><img src="images/footer_logo.png" alt=""></a>  &copy; 2013 | <a href="#">Privacy Policy</a> <br> Designed by <a href="http://www.templatemonster.com/" rel="nofollow">TemplateMonster</a> & <a href="https://www.zerotheme.com/" title="free website templates">Zerotheme</a>
+							<img src="http://alhadi-industries.com/wp-content/uploads/2016/11/fav.png"/>	  Copyright © 2017 Al-Hadi - Glass Industries.
 						</div>
 					</div>
 				</div>
 				<div class="clear"></div>
 			</div>
 		</footer>
+				<script>
+			setTimeout(function(){
+							if(location.hash=='#acc'){
+				goToByScroll('page4');
+			}
+			
+						if(location.hash=='#services'){
+				goToByScroll('page2');
+			}
+			
+						if(location.hash=='#about'){
+				goToByScroll('page3');
+			}
+			
+						if(location.hash=='#con'){
+				goToByScroll('page5');
+			}
+			
+			
+			},2000)
+
+		</script>
 	</body>
 </html>

@@ -2,6 +2,8 @@
 .menu_block  {
 	z-index: 999;
 	float: right;
+	 /**text-shadow: 1px 1px 1px black, 0 0 1em black;**/
+  
 }
 
 nav>.sf-menu {
@@ -16,13 +18,14 @@ nav{ position:relative;padding: 0px 0 0 0;}
 }
 
 .sf-menu>li+li {
+	
 }
 
 
 .sf-menu>li>a{
 	font-size: 18px;
 	font-family: 'Signika', sans-serif;
-	color: #fff;
+	color: #004494;
 	position: relative;
 	line-height: 24px;
 	padding: 38px 13px 6px;
@@ -43,12 +46,25 @@ transition: 0.5s ease;
 	height: 100%;
 	top: -100%;
 	background-color: #004494;
+	
+
 }
 
 .sf-menu>li.sfHover .hover, .sf-menu>li:hover .hover{
 	top: 0;
+	
 }
 
+.sf-menu>li>a:hover{
+		color:white;
+	
+}
+
+
+.sf-menu>li>a:focus{
+		color:white;
+	
+}
 
 
 /*================================>> 2 Level <<========================================*/
@@ -78,7 +94,7 @@ transition: 0.5s ease;
 .sf-menu li ul li a{
 	text-transform: uppercase;
 	font: 16px/16px 'Dosis', sans-serif;
-;
+
 	position: relative;
 	color: #000;
 
@@ -86,7 +102,7 @@ transition: 0.5s ease;
 
 .sf-menu li li a:hover, 
 .sf-menu li.sfHover li.sfHover>a {  
-	color: #ec0606;
+	color: red;
 
 }
 
