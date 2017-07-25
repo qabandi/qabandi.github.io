@@ -1,9 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
+	<script>
+	var interval = setInterval(function() {
+    if(document.readyState === 'complete') {
+        clearInterval(interval);
+        $('#qloader').css('display','none')
+    }    
+}, 100);
+	
+	</script>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-		<title>Home</title>
+		<title>Al-Hadi | Glass Industries</title>
+		<style>
+	#qloader{
+			background-color:rgb(24, 88, 163);
+         width:100%;
+         height:100%;
+         position:absolute;
+		 top:0px;
+         z-index:9000;
+		}
+ .qloaderimg{
+ 
+  width:100px;
+  height:100px;
+border-radius:100%;
+  position:absolute;
+  border: 2px solid white;
+  animation: up 1s;
+animation-iteration-count: infinite;
+  transition:2s;
+ border-bottom:none;
+  border-right:none;
+  animation-timing-function:linear;
+    	 margin-left: -70px;
+	margin-top: -70px;
+	left:50%;
+	top:5.6%;
+
+  }
+  
+  @keyframes up{
+   from{transform:rotate(0deg); }
+   50%{transform:rotate(180deg);}
+   100%{transform:rotate(360deg);}
+  }
+  #qloaderimg2{
+  width:90px;
+  height:90px;
+  left:50.35%;
+  top:5.7%;
+  animation-delay:.2s;
+
+  }
+    #qloaderimg3{
+   width:80px;
+  height:80px;
+    left:50.70%;
+  top:5.8%;
+  animation-delay:.4s;
+  }
+    #qloaderimg4{
+   width:70px;
+  height:70px;
+     left:51.05%;
+  top:5.9%;
+  animation-delay:.6s;
+
+  }
+    #qloaderimg5{
+    width:60px;
+  height:60px;
+      left:51.40%;
+  top:6.0%;
+  animation-delay:.8s;
+
+  }
+		</style>
 		<link rel="icon" href="http://alhadi-industries.com/wp-content/uploads/2016/11/fav.png">
 		<link rel="shortcut icon" href="http://alhadi-industries.com/wp-content/uploads/2016/11/fav.png" />
 		<link rel="stylesheet" href="css/style.css">
@@ -25,6 +100,7 @@
 		<script src="js/css3-mediaqueries.js"></script>
 		<script type="text/javascript" src="js/smoothslides-2.2.1.min.js"></script>
 		<script>
+		
 			$(document).ready(function(){
 				$('.slider_wrapper')._TMS({
 					show:0,
@@ -170,10 +246,18 @@
 	}
 		</style>
 	</head>
+	
 	<body class="">
-
+<div id="qloader">
+ <div id="qloaderimg1" class="qloaderimg"></div>
+<div id="qloaderimg2" class="qloaderimg"></div>
+<div id="qloaderimg3" class="qloaderimg"></div>
+<div id="qloaderimg4" class="qloaderimg"></div>
+<div id="qloaderimg5" class="qloaderimg"></div>
+</div>
 <!--==============================header=================================-->
 		<header class="page1">
+		
 			<div class="zerogrid">
 				<div class="col-full">
 					<div class="wrap-col">
@@ -192,16 +276,15 @@
 									<li class=" men2"><a onClick="goToByScroll('page3'); return false;" href="#">About</a> <strong class="hover"></strong>
 										<div class="qnavsub2">
 											<a href="/zSimplex/aboutus.html">History</a>
-											<a href="#">Thing 2</a>
+											<a href="/zSimplex/infrastructure.html">Infrastructure</a>
 
 										</div>
 									</li>
 									<li class=" men3"><a onClick="goToByScroll('page4'); return false;" href="#">Accreditation</a> <strong class="hover"></strong></li>
-									<li class=" men4"><a onClick="goToByScroll('page5'); return false;" href="#">Contacts</a> <strong class="hover"></strong>
+									<li class=" men4"><a onClick="goToByScroll('page5'); return false;" href="#">Contact</a> <strong class="hover"></strong>
 										<div class="qnavsub4">
-											<a href="#">Thing 1</a>
-										
-
+											<a href="#">Careers</a>
+											<a href="#">Location</a>
 										</div>
 									</li>
 								</ul>
@@ -216,10 +299,17 @@
 		</header>
 <!--=======content================================-->
 		<div id="page1" class="content">
+		
 <div class="smoothslides" id="myslideshow1">
-	<img src='http://alhadi-industries.com/wp-content/uploads/2016/11/slide1.jpg'/>
-	<img src='http://alhadi-industries.com/wp-content/uploads/2016/11/slide2.jpg'/>
-	<img src='http://alhadi-industries.com/wp-content/uploads/2016/11/slide3.jpg'/>
+	<img src='./images/machine1.png'/>
+	<img src='./images/machine2.png'/>
+	<img src='./images/machine3.png'/>
+	<img src='./images/machine4.png'/>
+	<img src='./images/machine5.png'/>
+	<img src='./images/machine6.png'/>
+	<img src='./images/machine7.png'/>
+	<img src='./images/machine8.png'/>
+	
 </div>
 			<div class="zerogrid">
 				<div class="col-full">
