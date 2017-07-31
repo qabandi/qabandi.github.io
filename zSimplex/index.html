@@ -10,75 +10,11 @@
 }, 100);
 	
 	</script>
+	<style></style>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 		<title>Al-Hadi | Glass Industries</title>
-		<style>
-	#qloader{
-			background-color:rgb(24, 88, 163);
-         width:100%;
-         height:100%;
-         position:absolute;
-		 top:0px;
-         z-index:9000;
-		}
- .qloaderimg{
- 
-  width:100px;
-  height:100px;
-border-radius:100%;
-  position:absolute;
-  border: 2px solid white;
-  animation: up 1s;
-animation-iteration-count: infinite;
-  transition:2s;
- border-bottom:none;
-  border-right:none;
-  animation-timing-function:linear;
-    	 margin-left: -70px;
-	margin-top: -70px;
-	left:50%;
-	top:5.6%;
-
-  }
-  
-  @keyframes up{
-   from{transform:rotate(0deg); }
-   50%{transform:rotate(180deg);}
-   100%{transform:rotate(360deg);}
-  }
-  #qloaderimg2{
-  width:90px;
-  height:90px;
-  left:50.35%;
-  top:5.7%;
-  animation-delay:.2s;
-
-  }
-    #qloaderimg3{
-   width:80px;
-  height:80px;
-    left:50.70%;
-  top:5.8%;
-  animation-delay:.4s;
-  }
-    #qloaderimg4{
-   width:70px;
-  height:70px;
-     left:51.05%;
-  top:5.9%;
-  animation-delay:.6s;
-
-  }
-    #qloaderimg5{
-    width:60px;
-  height:60px;
-      left:51.40%;
-  top:6.0%;
-  animation-delay:.8s;
-
-  }
-		</style>
+		<link rel="stylesheet" href="css/qloader.css">
 		<link rel="icon" href="http://alhadi-industries.com/wp-content/uploads/2016/11/fav.png">
 		<link rel="shortcut icon" href="http://alhadi-industries.com/wp-content/uploads/2016/11/fav.png" />
 		<link rel="stylesheet" href="css/style.css">
@@ -88,7 +24,9 @@ animation-iteration-count: infinite;
 		<link rel="stylesheet" href="css/responsive.css">
 		<link rel="stylesheet" href="css/smoothslides.theme.css">
 		<link rel="stylesheet" href="css/qnav.css">
+		<link href="css/simplelightbox.css" rel="stylesheet">
 		<script src="js/jquery.js"></script>
+		<script src="js/simple-lightbox.min.js"></script>
 		<script src="js/jquery-migrate-1.1.1.js"></script>
 		<script src="js/superfish.js"></script>
 		<script src="js/forms.js"></script>
@@ -99,63 +37,7 @@ animation-iteration-count: infinite;
 		<script src="js/tms-0.4.1.js"></script>
 		<script src="js/css3-mediaqueries.js"></script>
 		<script type="text/javascript" src="js/smoothslides-2.2.1.min.js"></script>
-		<script>
-		
-			$(document).ready(function(){
-				$('.slider_wrapper')._TMS({
-					show:0,
-					pauseOnHover:false,
-					prevBu:'.prev',
-					nextBu:'.next',
-					playBu:false,
-					duration:800,
-					preset:'fade',
-					pagination:true,//'.pagination',true,'<ul></ul>'
-					pagNums:false,
-					slideshow:8000,
-					numStatus:false,
-					banners: 'fade',
-					waitBannerAnimation:false,
-					progressBar:false
-				});
-			});
-			$(document).ready(function(){
-				!function(){
-			var map=[]
-			 ,names=[]
-			 ,win=$(window)
-			 ,header=$('header')
-			 ,currClass
-			$('.content').each(function(n){
-			 map[n]=this.offsetTop
-			 names[n]=$(this).attr('id')
-			})
-			win
-			 .on('scroll',function(){
-				var i=0
-				while(map[i++]<=win.scrollTop());
-				if(currClass!==names[i-2])
-				currClass=names[i-2]
-				header.removeAttr("class").addClass(names[i-2])
-			 })
-			}(); });
-					function goToByScroll(id){
-				$('html,body').animate({scrollTop: $("#"+id).offset().top},'slow');
-				}
-				$(document).ready(function(){
-					$().UItoTop({ easingType: 'easeOutQuart' });
-				});
-				//hotfix for the menu styling
-				setInterval(function(){
-				if($(window).scrollTop()<300){
-					$('.current.men a').css('color','white');
-				}else{
-				    $('.current.men a').css('color','#004494');
-				}
-				},222);
-				
-				
-		</script>
+		<script src="js/qstuff.js"></script>
 		<!--[if lt IE 8]>
 			<div style=' clear: both; text-align:center; position: relative;'>
 				<a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
@@ -168,86 +50,8 @@ animation-iteration-count: infinite;
 			<link rel="stylesheet" media="screen" href="css/ie.css">
 		<![endif]-->
 		
-		<style>
-	#myslideshow11{
-	position:absolute;
-	top:0px;
-		
-		width:100%;
-		height:100%;
-		z-index:-1;
-	}
 
-	.qbox{
-		background-color:rgba(24, 88, 163, 0.9);
-		padding:10px;
-		text-align: left;
-		 white-space: pre-wrap;
-	}
-	
-	.qboxhead{
-		text=align:center;
-	}
-	
-	.qreadmore{
-		font-size:32px;
-		padding-top:10px;
-	}
-	
-	#page4 img{
-		width:200px;
-		background-color:rgba(255, 255, 255, 0.7);
-		
-	}
-	
-
-	
-	.qfoot{
-		padding:5px;
-	}
-	
-	.qnavsub1, .qnavsub2, .qnavsub4{
-		width:200px;
-		background-color:#004494;
-		    position: absolute;
-		  visibility: hidden;
-		opacity: 0;
-		min-height:50px;
-		z-index: -1;
-		font-size: 18px;
-    font-family: 'Signika', sans-serif;
-
-    line-height: 24px;
-  transform: translateY(-2em);
-
-  transition: all 0.3s ease-in-out 0s, visibility 0s linear 0.3s, z-index 0s linear 0.01s;
-
-	}
-	
-	.qnavsub1 a, .qnavsub2 a, .qnavsub4 a{
-		border-bottom:1px solid white;
-		display:block;
-		transition: background-color 1s;
-	}
-	
-	.men1:hover .qnavsub1, .men2:hover .qnavsub2, .men4:hover .qnavsub4{
-		
-		  visibility: visible;
-
-			opacity: 1;
-			z-index:1;
-		  transform: translateY(0%);
-		transition-delay: 0s, 0s, 0.3s;
-  
-	}
-	
-	.qnavsub1 a:hover,.qnavsub2 a:hover,.qnavsub4 a:hover{
-		 background-color: rgba(0,0,0,.5);
-	}
-		</style>
 	</head>
-	
-	<body class="">
 <div id="qloader">
  <div id="qloaderimg1" class="qloaderimg"></div>
 <div id="qloaderimg2" class="qloaderimg"></div>
@@ -255,6 +59,8 @@ animation-iteration-count: infinite;
 <div id="qloaderimg4" class="qloaderimg"></div>
 <div id="qloaderimg5" class="qloaderimg"></div>
 </div>
+	<body class="">
+
 <!--==============================header=================================-->
 		<header class="page1">
 		
@@ -714,27 +520,6 @@ Glass today is used to perform many functions other than its primary role of all
 				<div class="clear"></div>
 			</div>
 		</footer>
-				<script>
-			setTimeout(function(){
-							if(location.hash=='#acc'){
-				goToByScroll('page4');
-			}
-			
-						if(location.hash=='#services'){
-				goToByScroll('page2');
-			}
-			
-						if(location.hash=='#about'){
-				goToByScroll('page3');
-			}
-			
-						if(location.hash=='#con'){
-				goToByScroll('page5');
-			}
-			
-			
-			},2000)
 
-		</script>
 	</body>
 </html>
