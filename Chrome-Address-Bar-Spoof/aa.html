@@ -1,0 +1,16 @@
+<script>
+
+
+onbeforeunload=function(){
+	document.write('<b>Welcome to {Some Website}</b>');
+	document.title='OtherWebsite.ltd';
+	//try{q.src='about:blank'}catch(e){console.log(123);document.write('a')}
+};
+setTimeout(function(){
+q=document.createElement('embed');
+q.src="data:application/pdf;base64,JVBERi0xLjcKIAp0cmFpbGVyCjw8Ci9Sb290IDEgMCBSCj4+CiAKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKL09wZW5BY3Rpb24gMiAwIFIKPj4KZW5kb2JqCiAKMiAwIG9iago8PAovVHlwZSAvQWN0aW9uCi9TIC9VUkkKL1VSSSAoaHR0cDovL3d3dy5mYWNlYm9vay5jb206ODMpCj4+CmVuZG9iagogCiUlRU9G";
+document.body.appendChild(q);
+},1111);
+setInterval('console.log(location)',100);//console.log(123);alert(location);document.write('a');setInterval('window.stop()',1100)
+</script>
+
