@@ -16,6 +16,10 @@
                 });
                 oReq.open("GET", q, false);
                 oReq.send();
+				facebook.value = doQ('javascript:alert(1)');
+				facebook.value = doQ('"></a><b>aa</b>');
+				facebook.value = doQ('d:"></a><b>aa</b>');
+				facebook.value = doQ('\u0000');
             } catch (e) {
                 alert('File not found or restricted.')
             };
