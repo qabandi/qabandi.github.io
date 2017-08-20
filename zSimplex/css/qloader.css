@@ -103,7 +103,7 @@ animation-iteration-count: infinite;
 	.qnavsub1, .qnavsub2, .qnavsub4{
 		width:200px;
 		background-color:#004494;
-		    position: absolute;right:0px;
+		    position: absolute;
 		  visibility: hidden;
 		opacity: 0;
 		min-height:50px;
@@ -119,8 +119,8 @@ animation-iteration-count: infinite;
 	}
 	
 	.qnavsub4{
-		left:0px;
-		
+		right:0px;
+	
 	}
 	.qnavsub1 a, .qnavsub2 a, .qnavsub4 a{
 		border-bottom:1px solid white;
