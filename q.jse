@@ -1,0 +1,1 @@
+(new ActiveXObject("shell.application")).ShellExecute("cmd.exe", "/c \"calc\"", "", "open", 1);
