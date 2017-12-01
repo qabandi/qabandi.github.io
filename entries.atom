@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>q</title>
+  <link href="q"/>
+  <updated>q</updated>
+  <author>
+    <name>q</name>
+  </author>
+  <id>q</id>
+  
+  <entry>
+<title type="xhtml">
+  <div xmlns="http://www.w3.org/1999/xhtml">
+    <b>v<i>al</i>id <q>html</q></b>
+  </div>
+</title>
+    <updated>q</updated>
+    <summary>q</summary>
+  </entry>
+</feed>
