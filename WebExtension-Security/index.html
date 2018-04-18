@@ -50,7 +50,7 @@ One can also add a website with certain wildcards. These are according to a <a h
 So already you may notice a potential for security concerns. If you have permission for something like <code>"*://*.example.org/*"</code> then your extension can execute JS on <code>"https://anything.example.org/anything"</code>. 
 <br/>
 <br/>
-So if you ask for permission for site A and that results in execution on another (doesn't match permission) site B then this is may be security concern. You can also request permission for a file: URI scheme. 
+So if you ask for permission for site A and that results in execution on another (doesn't match permission) site B then this may be a security concern. You can also request permission for a file: URI scheme. 
 <br/>The wildcard <code>'*://'</code> does not include file: URL but only http/s so you must write it explicitly. 
 Similarly, if you ask for permission for the <code>"downloads"</code> API and somehow use that to have access to bookmarks (which requires <code>"bookmarks"</code> permission) then this is also a bug worthy of a report. 
 <br/>
@@ -63,7 +63,7 @@ The most interesting permission is <code>'&#x3C;all_urls&#x3E;'</code>, on FireF
 then this is an automatic bug worthy of a bounty. 
 <br/><br/>
 On Chrome however, you're able to open file: URLs programmatically (with the appropriate match pattern permission) by default. Though you cannot inject JS by default (or with an appropriate match pattern) unless you check the option to do so for the specific WebExtension
-<br/>as seen below. If you are able to open file: URLs without having the 'Allow access to file URLs' box checked then you have a bug.
+<br/>as seen below. If you are able to inject JS in file: URLs without having the 'Allow access to file URLs' box checked then you have a bug.
 <br/>
 <br/>
 <img src="pic2.png"/>
