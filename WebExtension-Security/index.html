@@ -1,0 +1,185 @@
+<!doctype html>
+<html>
+<head>
+	<title>WebExtension Security (Part 1) - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css" rel="stylesheet">
+	
+
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/> 
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+
+</div>
+</div>
+
+
+
+<div id="qWriteup">
+<h1>WebExtension security - Part 1</h1>
+<br>
+
+<p>     After spending some time now poking at browsers' web content and trying to come up with security concerns within it, I felt I was ready to look at other contexts concerning browsers. This is where my interests for Web Extensions sparked, it gave me a whole bunch of new API's to mess around with and I always wanted to learn how it all worked. </p>
+<h2>Quick rundown of WebExtension security</h2>
+
+I assume we all understand the basic security problems that browsers face as far as web content is concerned. Most of the security issues that web content suffers (Same origin policy violations, XSS, clickjacking and others) apply 
+to WebExtensions as well. But I would like to focus on the exclusively WebExtension security problems, to do so I will need to explain a few minor things. I suggest you <a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions" rel="noopener nofollow">read MDN</a> on them or take a look at the <a href="https://github.com/mdn/webextensions-examples" rel="noopener nofollow" target="_blank">source code of a small WebExtension</a> to get a better understanding.<br>
+<h3>Permissions</h3>
+All WebExtensions must have a file named <code>'manifest.json'</code> which contains the meta data of said extension. In this part I will be focusing on the <code>'permissions'</code> array variable within this file. If you have ever installed an extension, 
+you may have noticed that a prompt appears first telling you what the capabilities of the to-be-installed extension are.<br/><br/>
+<img src="pic1.png"/>
+<br/>
+For example, if you include <code>'bookmarks'</code> as one of the entries within your WebExtension permissions array then the user will be told before installation that the extension will have access to their bookmarks. With this capability you can programmatically mess around a user's 
+bookmarks. 
+
+<br/>
+Similarly, if you have a permission for <code>'downloads'</code> you will have the ability to interact with the downloads manager. Of course, you can have both at the same time and the user will be notified of both capabilities before installation.
+
+<br/>
+<br/>
+
+One can also add a website with certain wildcards. These are according to a <a href="https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Match_patterns" target="_blank" rel="noopener nofollow">match pattern</a>. 
+<br/>
+So already you may notice a potential for security concerns. If you have permission for something like <code>"*://*.example.org/*"</code> then your extension can execute JS on <code>"https://anything.example.org/anything"</code>. 
+<br/>
+<br/>
+So if you ask for permission for site A and that results in execution on another (doesn't match permission) site B then this is may be security concern. You can also request permission for a file: URI scheme. 
+<br/>The wildcard <code>'*://'</code> does not include file: URL but only http/s so you must write it explicitly. 
+Similarly, if you ask for permission for the <code>"downloads"</code> API and somehow use that to have access to bookmarks (which requires <code>"bookmarks"</code> permission) then this is also a bug worthy of a report. 
+<br/>
+
+<br/>
+<h3>Linking restrictions</h3>
+The most interesting permission is <code>'&#x3C;all_urls&#x3E;'</code>, on FireFox this will allow you to execute any JS on any content URL (http/s, file: URI scheme) but <b>does not</b> allow access to privileged (about:addons) and semi-privileged URLs (more on this later.)
+<br/> Keep in mind that just because Firefox allows your extension to execute JS within file: URL (with the <code>'&#x3C;all_urls&#x3E;'</code> or 'file://*' permission) does not mean you can open a file: URL programmatically.<br/><br/>
+ A user must manually open a file using the browser and then you may inject JS in it (and by injecting JS into a file: URL you may open other file: URLs through this injection). So if you are able (on Firefox) to programmatically open file: URLs (without relying on the user to open anything for you),
+then this is an automatic bug worthy of a bounty. 
+<br/><br/>
+On Chrome however, you're able to open file: URLs programmatically (with the appropriate match pattern permission) by default. Though you cannot inject JS by default (or with an appropriate match pattern) unless you check the option to do so for the specific WebExtension
+<br/>as seen below. If you are able to open file: URLs without having the 'Allow access to file URLs' box checked then you have a bug.
+<br/>
+<br/>
+<img src="pic2.png"/>
+<br/>
+<br/>
+This is all you need to be aware of to understand the next bugs I've found. More bugs will be discussed in part 2.
+<br/>
+
+<h2><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1425267" target="_blank" rel="nopener nofollow">CVE-2018-5113</a> - launchWebAuthFlow can open privileged pages - Firefox</h2>
+
+Using the "identity" permission, we get access to the launchWebAuthFlow function which is used to start an OAuth2 login flow. The following is the JS PoC:
+<br/>
+<br/>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">browser.identity.launchWebAuthFlow({
+    interactive<span style="color: #333333">:</span> <span style="color: #008800; font-weight: bold">true</span>,
+    url<span style="color: #333333">:</span> <span style="background-color: #fff0f0">&#39;about:addons?redirect_uri=http://any&#39;</span>
+});
+</pre></div>
+
+
+<br/>
+As you may have noticed, the function checked if <code>'redirect_uri'</code> was appended to the url, otherwise it would throw an error. More importantly, I am simply opening <code>'about:addons'</code> page (through a new window in this case) 
+<br/>and nothing else is needed beyond that to prove a bug exists. As I mentioned above, Firefox does not allow an extension to open a page like <code>'about:addons'</code> or local files unless a user first opens a single file URL themselves at least once. 
+<br/>So with this bug I could read entire disk or use it to chain with another bug for other gains.<br/>
+<br/>
+This part may be confusing because Chrome allows navigations to privileged pages (about: pages) whilst Firefox doesn't. As far as I know, the Mozilla security team believes that it is a risk to allow this because 
+
+it can be chained with other vulnerabilities that will result 
+in a bigger bug.<br/><br/>For example, there may be a bug in WebExtensions that allowed arbitrary JS execution on privileged pages, but you can't automatically open such a page unless the user does so explicitly (about:home is not privileged but semi-privileged, privileged pages
+<br/> can perform RCE by default.) So this bug here can be used to open such a page and then another bug used to inject code into it resulting in RCE.<br/>
+<br/>
+Another example of why Firefox disallows opening privileged about: pages is simple: XSS.<br/>
+I <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1422467" target="_blank" rel="nofollow noopener">found an XSS</a> in the <code>'about:cache'</code> page of the Firefox browser. To trigger this bug, a victim needed to visit two privileged pages.
+<br/><br/>
+First, the victim would need to visit the following URL:
+<br/>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">about:cache-entry?storage=memory<span style="color: #a61717; background-color: #e3d2d2">&amp;</span>context=<span style="color: #a61717; background-color: #e3d2d2">&amp;</span>eid=&lt;svg/onload=alert(location)&gt;<span style="color: #a61717; background-color: #e3d2d2">&amp;</span>uri=http://aa.com 
+</pre></div>
+
+<br/><br/>
+Secondly, the victim then has to visit this URL:
+<br/>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">about:cache?storage=memory<span style="color: #a61717; background-color: #e3d2d2">&amp;</span>context=
+</pre></div>
+
+<br/>
+<br/>
+And then our initial entry to the cache in the first step would appear without sanitizing the <code>'eid'</code> parameter. Unfortunately for me <code>'about:cache'</code> is not privileged (can't perform RCE) but it still contained a huge amount of private data. <br/>
+<br/>
+
+I hope it's clear by now that this XSS would have been useless unless I had another bug which allowed me to open any about: URL I wanted. So all a user needed to do was install my malicious WebExtension which does not ask for any extra permission other than 
+<code>'identity'</code> and I was able to chain these two bugs to execute JS within <code>'about:cache.'</code>
+<br/>
+
+<h2><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1425224" target="_blank" rel="nopener nofollow">CVE-2018-5112</a> - browser.devtools.panels.create does not ensure panel pagePath is relative URL (Firefox)</h2>
+<br/>
+This bug allowed me to open any URL (including privileged ones) within the devtools, which required the <code>'devtools'</code> permission. Less severe as the one before since it requires the user to manually open Devtools.
+<br/><br/>
+PoC: 
+<br/>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">browser.devtools.panels.create(
+  <span style="background-color: #fff0f0">&quot;My Panel&quot;</span>,
+  <span style="background-color: #fff0f0">&quot;icons/star.png&quot;</span>,
+  <span style="background-color: #fff0f0">&quot;about:about&quot;</span><span style="color: #888888">//&lt;--</span>
+).then((newPanel) <span style="color: #333333">=&gt;</span> {
+	console.dir(newPanel)
+  newPanel.onShown.addListener(handleShown);
+  newPanel.onHidden.addListener(handleHidden);
+});
+</pre></div>
+
+
+<h2><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1429379" target="_blank" rel="nopener nofollow">CVE-2018-5134</a> - Web extensions can open any url using view-source: (Firefox)</h2>
+The title speaks for itself. As we learned previously, you are not supposed to be able to open about: URLs, but simply appending <code>'view-source:'</code> at the beginning would bypass these restrictions. This bug required no special permissions, you can open new tabs by default. 
+<br/>
+<br/>
+PoC:
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">browser.tabs.create({url:<span style="color: #0000FF">&quot;view-source:about:about&quot;</span>})
+</pre></div>
+
+
+
+<br/>
+<h2><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1431371" target="_blank" rel="nopener nofollow">CVE-2018-5135</a> - activeTab permission allows executing scripts on pages it shouldn't (Firefox)</h2>
+
+
+The <code>'activeTab'</code> permission gives a WebExtension access to the active tab IFF the user interacts with an extension. The user can interact with an extension via three main ways:
+<br/><br/>
+
+1.	Clicking the extensions button that is displayed on the top right of Firefox.
+<br/>
+2.	Clicking a custom context menu (the thing that appears when you right click) button.
+<br/>
+3.	Activating a keyboard shortcut the extension assigned itself.
+<br/>
+<br/>
+In this case, all I did was notice that this functionality did not prohibit the extension from executing JS within <code>'about:cache'</code> which is a semi-privileged page you are not supposed to be able to access.
+<br/>
+<br/> I did not add anything unique to it for the bug to work, if memory serves I found it by simply checking if I can take a screenshot of a semi privileged page (using the new Firefox screenshot taker WebExtension.)
+<br/>
+
+<h2>To be continued</h2>
+This writeup is still just the tip of the iceberg, only 4 out of the 20+ bugs I have found within WebExtensions are featured here. Plenty more ground to cover and I am excited to say that I have discovered a chain of bugs that
+ will lead from HTTP web content to RCE using WebExtensions (and some other unrelated bugs). I will tweet as soon as the bugs have been fixed and when the writeup will come out.
+<br/><br/>
+If you have any questions hit me up on Twitter at <a href="https://twitter.com/qab" target="_blank" rel="noopener nofollow">@qab</a>. 
+<br/>
+
+
+<br/>
+
+</div>
+
+	<script type="application/javascript" src="../q.js">
+
+	
+	</script>
+</body>
+</html>
