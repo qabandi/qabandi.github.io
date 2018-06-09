@@ -1,10 +1,22 @@
 html{font:76% Verdana,Tahoma,Arial,sans-serif;background-color:#cccccc;}
-#qLogo{width:1700px;height:200px;
-
+body{margin:0px;}
+#qLogo{
+	    width: 100%;
+    height: 88px;
+    
+    background-color: #F2F2F2;
+    border-radius: 0px 0px 12px 12px;
+    
+    -webkit-transition: opacity 200ms ease-in;
+    -moz-transition: opacity 200ms ease-in;
+    transition: opacity 200ms ease-in;
+    -webkit-filter: drop-shadow(11px 11px 30px rgba(0,0,0,0.9));
+    filter: drop-shadow(11px 11px 30px rgba(0,0,0,0.9));
+    margin-bottom: 46px;
 
 }
 
-#qLogo img{width:50px;display:block;margin-left:10px;margin-top:30px;
+#qLogo img{width:50px;display:block;margin-left:10px;    margin-top: 9px;
 
 }
 
@@ -13,16 +25,17 @@ html{font:76% Verdana,Tahoma,Arial,sans-serif;background-color:#cccccc;}
 
 #qLogo h1,#qLogo img{float:left;}
 
-#qLogo #qNav{margin-top:30px;margin-left:20px;
-
-	width:750px;height:100px;
-	float:left;
+#qLogo #qNav{    margin-top: 6px;
+    margin-left: 20px;
+    width: 750px;
+    height: 100px;
+    float: left;
 }
 #qLogo #qNav a{
 	display:block;
 	text-decoration:none;
 	color:black;
-border-bottom:2px solid white;
+border-bottom:2px solid #949292;
 	width:100px;
 	height:50px;
 	float:left;
@@ -32,11 +45,11 @@ border-bottom:2px solid white;
 	line-height:50px;
 	    -webkit-transition: border-bottom 200ms ease-in;
     -moz-transition: border-bottom 200ms ease-in;
-    transition: border-bottom 200ms ease-in;color:rgb(61,61,61);
+    transition: border-bottom 200ms ease-in;
 		 	text-shadow: 1px 1px 1px #737373; 
 }
 #qLogo #qNav a:hover{
-	border-bottom:2px solid black;
+	border-bottom:4px solid #949292;
 
 }
 #qContent{
@@ -47,6 +60,7 @@ border-bottom:2px solid white;
 	
 }
 .qArticle{
+	
 	border:1px solid white;
 	width:450px;
 	height:300px;
@@ -116,9 +130,10 @@ border-bottom:2px solid white;
 
 
 #qWriteup{
+	line-height: 23px;
 	width:80%;
 	margin:0 auto;
-	background-color:rgba(255,255,255,0.5);
+	background-color:rgb(231, 231, 231);
 	font-size:16px;
 	padding:25px;
 	border-radius:7px;  -webkit-filter: drop-shadow(11px 11px 30px rgba(0,0,0,0.9));
@@ -132,10 +147,21 @@ border-bottom:2px solid white;
 
 #qWriteup p{text-align:left;}
 #qWriteup h1{display:block;}
-#qWriteup img{display:block;text-indent: 40px;}
+#qWriteup h1, h2, h3, h4{
+	    background-color: #d8d8d8;
+    padding: 5px;
+	
+}
+#qWriteup img{display:block;text-indent: 40px;    border-radius: 7px;    margin: 0 auto;}
 #qWelcome{color:rgb(61,61,61)}
 #qWriteup a{color:black;}
+
+#qWriteup div{
+	
+	border-radius:7px;
+}
 #qvisited{
-	border:1px dotted white;cursor:default;
+	border-bottom:4px solid #949292 !important;
+	cursor:default;
 	
 }

