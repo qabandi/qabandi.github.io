@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+	<title>Firefox uXSS and CSS XSS - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css?q2" rel="stylesheet">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="https://leucosite.com/" />
+<meta name="twitter:title" content="Edge RCE" />
+<meta name="twitter:creator" content="@qab">
+<meta name="twitter:description" content="Chaining small bugs together to achieve RCE" />
+<meta name="twitter:image" content="https://leucosite.com/qimg/Art17.png" />
+<style>#qWriteup p{white-space: pre-wrap;}</style>
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/> 
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+</div>
+</div>
+<div id="qWriteup">
+<h1>Microsoft Edge Remote Code Execution</h1>
+<br>
+
+<p>Chaining a few bugs in Edge I was able to achieve remote code execution by mainly abusing custom URI schemes.</p>
+
+<h2>Launching External Applications</h2>
+<p>Many of you are probably aware that within the browser one can launch the default mail client by having a user go to a URL that looks like <code>'mailto:test@test.test'</code>. A prompt will appear asking the user whether to switch applications, once a user agrees, the application will run.
+
+<img src="../qimg/Art17-sub0.png"/>
+
+In my case, Outlook is the default mail application and as you can see in the image below certain parameters are sent to the Outlook executable.
+
+<img src="../qimg/Art17-sub1.png"/>
+
+So there is user tainted string being passed as a parameter value, clearly something could go wrong here. But the question is - What other external-application-launching URI schemes are there?
+</p>
+<h2>The Most Convenient Protocol</h2>
+<p>
+When looking at the registry we can find all the registered custom protocols we can use. Within <code>'Computer\HKEY_CLASSES_ROOT\'</code> we look for folders which contain <code>'shell\open\command'</code> as sub folders. For example, I found that <code>'ms-word'</code> has such sub folders.
+
+<img src="../qimg/Art17-sub3.png"/>
+
+So if we look at the values of <code>'Computer\HKEY_CLASSES_ROOT\ms-word\shell\open\command'</code> we find <code>'C:\Program Files (x86)\Microsoft Office\Root\Office16\protocolhandler.exe "%1"'</code>. This means if we have a user click on an anchor tag that points to <code>'ms-word:test'</code> the following will occur:
+
+<img src="../qimg/Art17-sub2.png"/>
+
+I am too lazy to look at all the possible command line parameters we could throw at <code>'protocolhandler.exe'</code> to achieve something useful. So let's take a look at a lower hanging fruit.
+
+<img src="../qimg/Art17-sub4.png"/>
+
+Well, this is very convenient! A URI scheme that passes user tainted arguments directly to <code>'WScript.exe'</code>. In case you don't know: <a href="https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/wscript" target="_blank" rel="noopener">"Windows Script Host provides an environment in which users can execute scripts in a variety of languages that use a variety of object models to perform tasks."</a> Let's see what happens if a user navigates to <code>'wshfile:test'</code> from Edge.
+
+First, we get a prompt asking to choose the default application that should handle this URI scheme. By default, as we've seen in the registry, <code>'Windows Script Host (WScript.exe)'</code> is the handler.
+
+<img src="../qimg/Art17-sub5.png"/>
+
+Pressing <code>'OK'</code> yields the following:
+
+<img src="../qimg/Art17-sub6.png"/>
+</p>
+<h2>Turning it into uXSS</h2>
+<p>One of the interesting behaviors of context menus is that once you open it, it will persist once you navigate to a different website. What's weirder is that if you, for example, open the context menu from <code>'a.com'</code> and then the browser redirects to <code>'b.com'</code>, you will notice that when you click on <code>View source</code> it will open <code>'view-source:b.com'</code> which is the current window.
+
+So, even though you open the context menu, it will execute on whatever website you are on despite origin. So to set this up, we ask a user to click a button that opens the cross origin 'victim' website. After that, we will redirect to our website populating navigation history with our target website. Finally, we listen to when a user opens the context menu using <code>'oncontextmenu'</code> and execute <code>'history.back()'</code> taking us to the target website. Once the user clicks <code>View background image</code> javascript is executed. Interestingly, this acts like a bookmark which means it bypasses CSP and noscript (a non-JS PoC can be done.)
+
+<b>xssSetup.html</b> (I am using <code>https://addons.mozilla.org/%00 to get a relatively quicker loding page, not required.)
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;button</span> <span style="color: #0000CC">id=</span><span style="background-color: #fff0f0">&quot;qbutt&quot;</span><span style="color: #007700">&gt;</span>click me<span style="color: #007700">&lt;/button&gt;</span>
+
+<span style="color: #007700">&lt;script&gt;</span>
+<span style="color: #008800; font-weight: bold">var</span> qwin;
+
+qbutt.onclick<span style="color: #333333">=</span>e<span style="color: #333333">=&gt;</span>{
+	qwin<span style="color: #333333">=</span>open(<span style="background-color: #fff0f0">&#39;https://addons.mozilla.org/%00&#39;</span>,<span style="background-color: #fff0f0">&#39;qab&#39;</span>);
+	
+	setTimeout(<span style="color: #008800; font-weight: bold">function</span>(){
+		open(<span style="background-color: #fff0f0">&#39;imgXss.html&#39;</span>,<span style="background-color: #fff0f0">&#39;qab&#39;</span>)
+	},<span style="color: #0000DD; font-weight: bold">1000</span>)
+}
+<span style="color: #007700">&lt;/script&gt;</span>
+</pre></div>
+
+<br>
+<b>imgXss.html</b>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;style&gt;</span><span style="color: #333333">*</span>{<span style="color: #008800; font-weight: bold">background-image</span><span style="color: #333333">:</span><span style="color: #DD2200; background-color: #fff0f0">url(&#39;javascript:alert(location)</span><span style="color: #FF0000; background-color: #FFAAAA">&#39;</span>)}<span style="color: #007700">&lt;/style&gt;</span>
+
+<span style="color: #007700">&lt;b&gt;</span> Right click, wait for redirection then click &#39;view background image&#39;<span style="color: #007700">&lt;/b&gt;</span>
+
+<span style="color: #007700">&lt;script&gt;</span>
+<span style="color: #007020">window</span>.oncontextmenu<span style="color: #333333">=</span>e<span style="color: #333333">=&gt;</span>{
+	setTimeout(<span style="background-color: #fff0f0">&quot;history.back()&quot;</span>,<span style="color: #0000DD; font-weight: bold">100</span>)
+}
+<span style="color: #007700">&lt;/script&gt;</span>
+</pre></div>
+<br>
+<b>Video:</b>
+<br><video loop="" controls><source type="video/mp4" src="//i.imgur.com/SiNadrn.mp4"></video><br>
+Mozilla swiftly fixed this issue and so it no longer works. But it sure was a fun find.
+</p>
+<h2>References:</h2>
+<b>The report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1465160" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1465160</a>
+</p>
+
+
+</div>
+
+</body>
+</html>
