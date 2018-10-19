@@ -1,14 +1,7 @@
-<button id="qb"><marquee><button>aaa</button></marquee></button>
+<button id="qb">go</button>
 <textarea id="qa" style="width: 852px; height: 503px;"></textarea>
 <script>
-var f='';
-for(q in this){
-	try{
-	f+=q+'|'+this[q]+'<br>';
-	}catch(e){
-	f+=q+'|ERROR|<br>';
-	}
+qb.onclick=e=>{
+	qa.value+='\n'+eval(qa.value);
 }
-
-qa.value=(f);
 </script>
