@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+	<title>WebExtension Security (Part 2) - Abdulrahman Al-Qabandi</title>
+	<link href="../q.css?q" rel="stylesheet">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="https://leucosite.com/WebExtension-Security-Part-2/" />
+<meta name="twitter:title" content="WebExtension Security (Part 2)" />
+<meta name="twitter:creator" content="@Qab">
+<meta name="twitter:description" content="We delve a bit deeper into WebExtension security featuring 5 bugs" />
+<meta name="twitter:image" content="https://leucosite.com/qimg/Art18.jpg" />
+<style>#qWriteup p{white-space: pre-wrap;}
+	code{background-color:#cccccc;}
+	#qpic{width:500px;}
+</style>
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/> 
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+</div>
+</div>
+<div id="qWriteup">
+<h1>WebExtension security - Part 2</h1>
+<br>
+
+<p>This is the second part of my three part writeup on WebExtensions, <a href="../WebExtension-Security/" target="_self">Link to part 1</a>. I wanted this part to be the last one but the bugs are taking longer to fix than originally anticipated. Anyway, in this part I will be discussing more complex bugs than in part 1 so I think these will be a bit more interesting. </p>
+<h2><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1346515" target="_blank" rel="noopener nofollow">CVE-2017-7821</a> - Remote Code Execution</h2>
+<p>This bug was one of my first reports on WebExtensions, and the method used here has been fixed but the underlying problem still exists. This bug was pretty simple, I rely on the <code>'downloads'</code> and <code>'downloads.open'</code> permissions which enables extensions to download and open files. I noticed that the <code>'downloads.open()'</code> function worked automatically without user interaction.
+
+But there was a problem, when I attempted to download and open an executable I was given a security error from Windows. This is due to the file being flagged as coming from the internet thus requiring additional user interaction on the OS level to fully execute. This was mitigated by using a <code>'.JAR'</code> file, which is basically a Java based executable which Windows conveniently doesn't create zone identifiers for. So no security prompt is displayed when downloaded and opened from the internet. So I wrote a simple extension that downloaded a JAR file and attempted to execute it, worked! 
+
+This was fixed on Firefox by having <code>'downloads.open()'</code> only work within a valid user action. So technically this still 'works' in that you could trick a victim into clicking something and then you could still execute JAR files.
+
+Also, this attack can work on Google Chrome. The problem with Chrome is that most executable files are not automatically downloaded, there is a small prompt that appears above the executable in the downloads bar that asks if the user wants to keep this potentially dangerous executable. But! the <code>'.EXE'</code> file type is exempt from this rule, I can only imagine this was done so companies can push their legitimate installers without scaring their customers. However, you must still bypass Windows' zone identifier security prompt.
+
+Thanks to the behavior noticed in this bug I was able to use it to get <a href="https://www.mozilla.org/en-US/security/advisories/mfsa2018-16/#CVE-2018-12368" target="_blank" rel="noopener nofollow">another RCE (CVE-2018-12368)</a> using the infamouse <code>'.SettingContent-ms'</code> file extention (bounty split with founder of said file). This is because Firefox (and Chrome) did not treat this file as executable though it can be used as such.
+The original bug report is open, <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1346515" rel="noopener" target="_blank"> check it out for more details and the original PoC used.</a>
+</p>
+<h2><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1436482" target="_blank" rel="noopener nofollow">CVE-2018-5172</a> - RCE through privilege escalation (Firefox)</h2>
+<p>One interesting aspect of browsers is that they usually come with bult-in content handlers. You may have noticed that when you open a PDF file Firefox will allow you to preview it within the browser itself, even without having installed a PDF reader application.
+This is due to Firefox running <code>'PDF.js'</code> which essentially converts PDF into viewable HTML. But did you know that this PDF document is not same-origin with the website its hosted on?
+
+Say you have a window opened <code>'http://localhost/q.pdf'</code> and you have a reference to that window within <code>'http://localhost/index.html'</code> you will have no access to the 'q.pdf' reference. This is because despite the addressbar pointing to <code>'http://localhost/q.pdf'</code> it's actually <code>'resource://pdf.js/web/'</code>.
+This is true for JSON previewer and Feed viewer as well. These content viewers also come with elevated privelege, meaning if you somehow execute code in them you have an elevation of privilege bug.
+
+All I did was notice that a WebExtension did not make this distinction, so I was able to inject Javascript into the PDF viewer/Feed reader. When your extension asks permission for <code>'&#x3C;all_urls&#x3E;'</code> you don't have access to <code>'resource://'</code> URLs, so using the trick here I was able to bypass this restriction.
+
+Now the next step is to actually make use of this elevation of privilege. I could not find any useful functions within PDF, however, not long ago I reported an issue in Feed reader that could lead to RCE with user interaction (<a href="https://twitter.com/Qab/status/1057350293686575105" rel="noopener" target="_blank">I discuss this here</a>). But it was very high in user interaction, so I used the bug here to execute code into the feed reader and lessen the user actions required to achieve the RCE.
+
+<a href="https://www.youtube.com/watch?v=TRrdmuaFzuQ" target="_blank">Here is the original Youtube video mentioned in my report that shows it in action.</a>
+
+Original report is <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1436482" target="_blank">public here.</a> A lot of other details as well as PoC.
+</p>
+<h2><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1427289" target="_blank" rel="noopener nofollow">CVE-2018-5171</a> - Privilege escalation on 'addons.mozilla.org' + CSP bypass</h2>
+<p>Mozilla's addon domain is considered a semi-privileged page, this is due to it having <code>'navigator.mozAddonManager'</code> function which could be used to install addons automatically without user consent. So even if your extension has the <code>'&#x3C;all_urls&#x3E;'</code> permission you still can't inject javascript into <code>'addons.mozilla.org'</code>.
+so injecting JS into this domain means you have a privilege escalation vulnerability. Which is exactly what I found.
+
+Using the <code>'webRequestBlocking'</code> permission, I noticed that I could replace the HTML within <code>'addons.mozilla.org'</code>. But I was hit with a CSP violation when I tried to inject inline script, so it seemed like my efforts were futile until I noticed that the page was including <code>'https://www.google-analytics.com/analytics.js'</code> without an integrity attribute, so all I did was instead of filtering the HTML within <code>'addons.mozilla.org'</code>, I filtered the Javascript of Google analytics and boom! JS executed and CSP bypassed, with full access to mozAddonManager.
+The original bug is now public, <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1427289" target="_blank" rel="noopener nofollow">I recommend checking it out as it also contains the original PoC extension used.</a>
+</p>
+<h2><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1425197" target="_blank" rel="noopener nofollow">Privilege escalation using inspectedWindow.eval (Firefox and Chrome)</a></h2>
+<p>On Firefox I found that I could still inject Javascript using the devtools functionality within WebExtensions, where you could interact with the Web Inspector. Pretty straightforward in FireFox, <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1425197" target="_blank">original bug is public</a>, again recommend you read it for more details.
+
+However, on Google Chrome this is a much bigger issue, as I found I could inject Javascript into literally all URLs even privileged <code>'chrome:'</code> pages. However, I was surprised by how Google Security handled the bug report. 
+
+I originally reported the issue on 'Dec 17 2017' and it is <b>still not fixed</b> as of writing this. According to some comments in the report, this could be used to perform RCE. And yet this is the last comments in the bug report thread:
+
+<a href="./googleReport.png"><img id="qpic" src="./googleReport.png"/></a>
+</p>
+<h2>In conclusion</h2>
+<p>Just goes to show that sometimes it's very frustrating to deal with bug reports. This type of behavior is very discouraging to folks like me. I have bugs with Mozilla that are 2 years old but at the very least there seems to be an effort to communicate. But to ignore for months with not even a 'hey im busy can you try to find a fix for this?'. Very shameful from such a big company.
+
+Thankfully the sea of infosec is plentiful and full of other spots with much fruitful yields. Forgive my little rant but I needed to voice my dissappointment.
+
+Part 3 coming soon and will include some more interesting bugs in WebExtensions. Let me know if you have any questions, my DMs are open (@qab).
+</p>
+<h2>Reference</h2>
+Thumbnail art done by HeidiGFX: <a href="https://www.instagram.com/heidigfx/" target="_blank">https://www.instagram.com/heidigfx/</a>
+</div>
+</body>
+</html>
