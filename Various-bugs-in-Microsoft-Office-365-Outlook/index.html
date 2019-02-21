@@ -36,8 +36,7 @@ I manage to find a stored XSS vulnerability.<br><br>
 <br>
 <h2>Outlook XSS using copy and paste</h2>
 Another interesting discovery was an XSS in the outlook new mail body which required the user to copy (from our evil website) into the new mail body.<br><br>
-<iframe src="https://vid.me/e/pvXl" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" height="480" width="854"></iframe>
-<br>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/5XMt0cB0DaI" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><br>
 <h2>Other XSS vulnerabilities in Outlook</h2>
 There was a bug that was exclusive to Google Chrome users where I inject a link tag and would result in javascript being executed as soon as the victim opened the malicious email (without any other interactions.)<br>
 The XSS vector:<br> <code>&lt;link rel='import' href='data:q,&lt;script&gt;alert(1)&lt;/script&gt;'&gt;</code><Br>
@@ -48,8 +47,7 @@ Though I actually base64 encoded the actually content of the data uri scheme to 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/bq2zi1Khl2g" frameborder="0" allowfullscreen></iframe>
 
 <h2>Reflected XSS:</h2>
-<iframe src="https://vid.me/e/kJdC" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" height="480" width="854"></iframe>
-</p><br>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/BiKRv0W4p24" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></p><br>
 
 <p>
 <h2>References:</h2>
