@@ -1,1 +1,84 @@
-<b>Will be back soon</b>
+<!doctype html>
+<html>
+<head>
+	<title>Microsoft Office 365 - Outlook XSS</title>
+	<link href="../q.css?q" rel="stylesheet">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="https://leucosite.com/Microsoft-Office-365-Outlook-XSS/" />
+<meta name="twitter:title" content="Microsoft Office 365 - Outlook XSS" />
+<meta name="twitter:creator" content="@qab">
+<meta name="twitter:description" content="I revisit Outlook after 4 years and compare bugs found." />
+<meta name="twitter:image" content="https://leucosite.com/qimg/Art19.png" />
+<style>.qResize{
+	width:80%;
+	height:80%;
+}
+#qWriteup p{white-space: pre-wrap;}
+	code{background-color:#cccccc;}
+	#qpic{width:500px;}
+</style>
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/> 
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+
+</div>
+</div>
+<div id="qWriteup">
+<h1>Microsoft Office 365 - Outlook XSS</h1>
+<br>
+
+<p>     Outlook was the first website I have found and participated in a bug bounty for back in 2015. I ended up finding several bugs which I have showcased <a href="/Various-bugs-in-Microsoft-Office-365-Outlook/">here</a> (updated videos.)</p><p><br></p><p>So I thought it would be nice to revisit Outlook and see what I can find and possibly see a pattern in how bugs evolve over time. I was able to find a few bugs of which two I will be writing about here. These two bugs are XSS bugs which are a little more complex than the 2015 bugs I found.</p>
+<h2>Outlook XSS using SVG emoji</h2>It's been a while since I delve into Outlook, so I went to basics and just started to look for different use cases and on the way check for common bugs. One such use cases is pretty common in mail providers - Setting email signature. I simple created a signature and by mere chance had put an emoji within it, just to see how signatures are handled.<div><br></div><div>I noticed that after setting a signature, every new email you create will have that signatures valid html added on the end of your emails body. One thing stood out when looking at this HTML code, I noticed the emoji I chose was added in a peculiar way.</div><div><br>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">&lt;img</span> <span style="color: #FF0000">class=</span><span style="color: #0000FF">"EmojiInsert"</span> <span style="color: #FF0000">src=</span><span style="color: #0000FF">"data:image/gif;base64,{BASE64 emoji}"</span> <span style="color: #000080; font-weight: bold">/&gt;</span>
+</pre></div>
+
+</div><div><br>I was expecting to see the unicode based emoji, but instead I am seeing this tag in the mail body before being sent. After sending it, the reciever would get the emoji except it would have been uploaded to Outlooks attachment service. The HTML ends up turning into:</div><div><br></div><div><!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">&lt;img</span> <span style="color: #FF0000">originalsrc=</span><span style="color: #0000FF">"cid:5q3e7cdf-c63f-4f7b-8975-cq66e59d5639"</span>
+ <span style="color: #FF0000">size=</span><span style="color: #0000FF">"2128"</span> 
+<span style="color: #FF0000">contenttype=</span><span style="color: #0000FF">"image/jpeg"</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">"img710290"</span> <span style="color: #FF0000">crossorigin=</span><span style="color: #0000FF">"use-credentials"</span> 
+<span style="color: #FF0000">src=</span><span style="color: #0000FF">"https://attachments.office.net/owa/alqabandi@test/service.svc/s/GetFileAttachment?id={ID}&amp;X-OWA-CANARY={TOKEN}"</span> <span style="color: #FF0000">tabindex=</span><span style="color: #0000FF">"0"</span> <span style="color: #FF0000">style=</span><span style="color: #0000FF">"max-width: 99.9%; user-select: none;"</span><span style="color: #000080; font-weight: bold">&gt;</span>
+</pre></div>
+
+<br></div><div>So what's happening is that the base64 data in the draft email is being used to create an attachment on Outlooks servers. The first test is to open the <code>'</code><code>src'</code> of the image and see if the image is downloaded or served inline and rendered in the browser. It does!</div><div><br></div><div>So the obvious test here is to manipulate <code>'</code><code>EmojiInsert'</code> to contain a base64 encoded SVG image that contains our JS. Which I did and it worked! SVG was created as an attachment and renders in the browser. However, the was a small issue. <code>'</code><code>attachments.office.net'</code> was the domain my JS loaded SVG file was being hosted on, and this domain is NOT part of Microsofts bug bounty.&nbsp;</div><div><br></div><div>I thought it was a smart move to host all attachments in a cross-origin subdomain, this will benefit everyone. But I did not give up here, one idea came to mind after looking at the resulting <code>'</code><code>src'</code> URL. I noticed that two parameters are sent, <code>'</code><code>id'</code> and <code>'</code><code>X-OWA-CANARY'</code>.</div><div><br></div><div>You see, for some reason normal attachments in emails (the ones that usually are not images and have no preview within emails body) are still hosted on the main <code>'</code><code>outlook.office.com'</code> domain. They also take the same two parameters, so immediately I tried to use the <code>'</code><code>id'</code> and <code>'</code><code><code>X-OWA-CANARY</code>'</code> from <code>'attachments.office.net' </code>and to <code>'</code><code><code>outlook.office.com</code>'</code> and it worked, the SVG still displayed inline but this time in a bounty worthy domain scope.</div><div><br></div><div>Here is the full PoC as well as a video.&nbsp;</div><div><br>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008080">&lt;?xml version="1.0" standalone="no"?&gt;</span>
+<span style="color: #008080">&lt;!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"</span>
+<span style="color: #008080"> "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;svg</span> <span style="color: #FF0000">version=</span><span style="color: #0000FF">"1.0"</span> <span style="color: #FF0000">xmlns=</span><span style="color: #0000FF">"http://www.w3.org/2000/svg"</span> <span style="color: #FF0000">width=</span><span style="color: #0000FF">"50pt"</span> <span style="color: #FF0000">height=</span><span style="color: #0000FF">"53pt"</span> <span style="color: #FF0000">viewBox=</span><span style="color: #0000FF">"0 0 50 53"</span> <span style="color: #FF0000">xmlns:xlink=</span><span style="color: #0000FF">"http://www.w3.org/1999/xlink"</span><span style="color: #000080; font-weight: bold">&gt;</span>
+  <span style="color: #000080; font-weight: bold">&lt;defs&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;filter</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">"image"</span><span style="color: #000080; font-weight: bold">&gt;</span>
+      <span style="color: #000080; font-weight: bold">&lt;feImage</span> <span style="color: #FF0000">xlink:href=</span><span style="color: #0000FF">"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD4AAAA4CAIAAAAq+twOAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQESURBVGhD7ZfbTiJBEIZ9Lh6It9jNekJFhQHPnByQ9W5veZG9WWPceGNWwMTEZDkIq/t3V/VM98wQ6dagBv780Z4+1HwUxXTP0vOn1fyhf5dqNptnUo1Go15v+PW67/unUrVarVqtVarVcqVSKpeFS+WTk9JZs9npdDjK6zSX6P9iGuse6xZ6eno6Pz+/vr6uNxpvQu+IjnyDdTQaPZIfyY/DwEPxdzAkD2HQA/3h4eHq6vep77c7HZjDOckRHUUSR1fcaIwmod/f39/d3f26uKjWTuF2u80R7eWIjuIGOnNH0AEtrbgN9G63C9ybm5ufUpVKlSPayxEdP0qg/7ARoe+Y8opFjmgvR3Q8TETWucTNaqGsU7UMkG/OOtq37fafW/Jtt3sHe4UCR7TXHKL7PqErYpNb4AaW3BK9H7g/GI3GcN6bOTo2HTy8uYqdROi5vMcR7eWIjs0S6Pwc1JLNdcLJVilH2egpHwx6Kuu7uTxHtJcjOjZ5bJMhsQY9lAo/gOTW0AeolgB9J5fjiPZyRMfh5E0KZnt3lyPaa/7QcR5EwaiqkKbCoCJJLvGwWoKC2d6ZOToOsdgdw1IOP8NU3AF6dnuHI9rLFb0E9FcWjNBWdpsj2ssRHS8NnHUzzbFMwyLZer7JdG7bzGY5or0c0Y9PTgS6wp0ADSdAC/f6hL6xtUCfXkfHx6PxmMvWSYSe2dziiPZyRD88OgJ6LMfkwaT6Fu71/0oz+sYmR7SXI/rBYQRd4iriZGhYcQfo65kNjmgvV/SDQzyV+bt3EqGvZTIc0V6O6PsHB0CPJjXRWqZ1E/rq+szR9/b3X0aP4eom9JW1dY5or/lDL+4JdC5bJxH68uoaR7SXI3qhuIcTSK/fR2rJkaS+aEZfWeWI9nJE94pF3DhCY2VC//YO6IUC3fuV/rq8whHt5Yie9wp4mcdLMV4uYbzs4KUBh28cYnEYhHE4wSaPzRKbDh7eMJ6D+FGiuFEkSDag4S/fljmiveYP/SNogf4eWqC/hxbo7yFCb6WXltIt2XwDvW20ifpoWcfHTnmXfBGTMfrp0YMu2Wh5qSWh4Es3VmgXaLKM20Wnm1MuObq5RigYgdItcaWvSaX0UXTG0VVM0VTwaGtNGtdD63O1Kfqcy1bLjIoxtVxTuJZWi7nqvzmamHUei7SDxQlRtH5qx6OR9J5EdnOJnOIl5E1oSnRxIdbzv7BDKXFhZA6EHl1hfCU9jpBYEMYwRqdFF1ey/lQcc5SGw3Y8GineE5E5QWQ9nVblEhmdGl1eIpCegWBctJNyo/XHaj1UON9sqxoPK0sftUAX15G7ih5SdGJwLW5PUkvDRWqWcSNekG7ptwvawSjahP4ptUCfvZ6f/wMV2V3jXyWFvwAAAABJRU5ErkJggg=="</span><span style="color: #000080; font-weight: bold">/&gt;</span>
+    <span style="color: #000080; font-weight: bold">&lt;/filter&gt;</span>
+  <span style="color: #000080; font-weight: bold">&lt;/defs&gt;</span>
+  <span style="color: #000080; font-weight: bold">&lt;rect</span> <span style="color: #FF0000">x=</span><span style="color: #0000FF">"10%"</span> <span style="color: #FF0000">y=</span><span style="color: #0000FF">"10%"</span> <span style="color: #FF0000">width=</span><span style="color: #0000FF">"80%"</span> <span style="color: #FF0000">height=</span><span style="color: #0000FF">"80%"</span>
+      <span style="color: #FF0000">style=</span><span style="color: #0000FF">"filter:url(#image);"</span><span style="color: #000080; font-weight: bold">/&gt;</span>
+  <span style="color: #000080; font-weight: bold">&lt;script </span><span style="color: #FF0000">type=</span><span style="color: #0000FF">"text/javascript"</span><span style="color: #000080; font-weight: bold">&gt;</span>
+  <span style="color: #008800; font-style: italic">//&lt;![CDATA[</span>
+	<span style="color: #000080; font-weight: bold">if</span>(location.hostname==<span style="color: #0000FF">"attachment.outlook.office.net"</span>){
+	    <span style="color: #000080; font-weight: bold">var</span> qsplit=location.search.split(<span style="color: #0000FF">"&amp;"</span>);
+		location=<span style="color: #0000FF">'https://outlook.office.com/owa/service.svc/s/GetFileAttachment'</span>+qsplit[<span style="color: #0000FF">0</span>]+<span style="color: #0000FF">'&amp;'</span>+qsplit[<span style="color: #0000FF">1</span>];
+	}<span style="color: #000080; font-weight: bold">else</span>{
+		alert(<span style="color: #0000FF">'XSS by @qab, location.hostname='</span>+location.hostname);
+	}
+	<span style="color: #008800; font-style: italic">//]]&gt;</span>
+  <span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/svg&gt;</span>
+</pre></div>
+
+</div><div><br>
+<a href="https://www.youtube.com/watch?v=VE8WqprZVh4" target="_BLANK" rel="nofollow noopener noreferer">https://www.youtube.com/watch?v=VE8WqprZVh4</a></div><div><br>
+<h2>Outlook XSS using vCalendar</h2>
+<p>Outlook comes with an integrated calendar, this is useful as it can be used to mark dates and create meetings. Once someone creates a calendar item for a specific day they can then forward it to a victim and through it create a meeting with that person. Going through the use cases I stumbled on an import function for calendars and this caught my eye.</p><p><br></p><p>The calendar import tool asked for a <code>'</code><code>.ICS'</code> file, which is a vCalendar format plain text file which looks like HTTP response and request headers with values. <br></p><p><br></p><p><img style="width: 40%;" class="qResize" src="./calendar.png"></p><p><br></p><p>So I started to create my own vCalendars and importing them hoping to catch a mistake, but I could'nt at first. I went through all the possible keys and values and did not find much. I thought that since there is an import function there should be a way to export.</p><p><br></p><p>I had to see how Microsoft would generate its own vCalendars where I may find something I can use to my advantage. So I exported a forwarded calendar event/meeting. See, when you forward a calendar item to someone, what's happening is that an email is sent with a file attachment but that file attachment is marked as a calendar item (because its an .EML file) thus is displayed differently. <br></p><p><br></p><p>Within this attached EML file I found our generated vCalendar data. Decoding it from base64 revealed the information I needed. Microsoft generated vCalendars contain certain non-standard values and keys, these started with <code>'</code><code>X-'</code> which makes it obvious. Before I go into what I found, I'd like to mention Outlook meetings.</p><p><br></p><p>Outlook meetings is essentially a forwarded calendar event, within this meeting/event one can set up an online meeting. Once a user marks it as an online meeting, Microsoft creates a Lync URL and then attaches it on the meeting so that both parties can access the same link from each side.</p><p><br></p><p><img src="./xsscal.png"></p><p><br></p><p>So what I found when I looked at the custom vCalendar entries was the value of the generated Lync URL. So all I did was replace the HTTPs URL to a JAVASCRIPT one and I was able to get an XSS. All a user would need to do is accept a meeting with me then click on the<code>'</code><code>Join online meeting'</code> button and I would have JS executed.<br><br><img class="qResize" src="./xss2.png"><br></p><p><br></p><p>Video of it in action.<br>
+<a href="https://www.youtube.com/watch?v=L_XdplWMpgA" target="_BLANK" rel="nofollow noopener noreferer">https://www.youtube.com/watch?v=L_XdplWMpgA</a></div><div><br>
+
+</p>
+<h3>Conclusion</h3>It was nice to see the evolution of these types of bugs from ~4 years ago. This is either a good sign that Microsoft is headed in the right direction or my skills and patience has improved over the years. It was definitely fun to look at Office 365 again, though I don't think I am done yet as I feel I barely scratched the surface. <br></div><div><br></div><div>Hit me up @qab if you have any questions.<br></div><div><br></div></div>
+
+</body>
+</html> 
