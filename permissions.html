@@ -1,6 +1,8 @@
-permissions.html
+permission-child.html
 
 <script>
 	var constraints = { audio: true, video: { width: 1280, height: 720 } }; 
-	navigator.mediaDevices.getUserMedia(constraints);
+	navigator.mediaDevices.getUserMedia(constraints).then(e=>{console.log(location);console.dir(e)});
+	
+	
 </script>
